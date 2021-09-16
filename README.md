@@ -179,6 +179,22 @@ For creating the list.txt file, use `listgen` as follows.
     --ligandpath ./ligands/                    # Path to the directory containing ligands
     --ligandfmt pdbqt                          # Format of ligand files
 
+The list file is comprised of the path to protein, path to ligand, and the job name as follows.
+
+
+    ./protein/protein.maps.fld
+    ./ligands/ligand_1.pdbqt
+    ligand_1
+    ./ligands/ligand_2.pdbqt
+    ligand_2
+    ./ligands/ligand_3.pdbqt
+    ligand_3
+    ...
+    ...
+    ./ligands/ligand_n.pdbqt
+    ligand_n
+    
+
 <br/>
 
 ### **step 3**
