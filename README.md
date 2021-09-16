@@ -54,7 +54,7 @@ First, create a environment of Anaconda and install **mgltools** and **autodock*
 Now, when you type **pmv** in the terminal, the GUI program will be opened.
 
 
-![pmv](https://github.com/jongseo-park/Auto_AutoDock-GPU/blob/master/images/a.png)
+![pmv](https://github.com/jongseo-park/AutoDock-GPU_for_batch/blob/master/images/a.png)
 
 
 You can create a pdbqt formatted file of protein and gpf formatted file containing several parameters for docking grid. Before you begin, I recommend deleting all waters in the pdb file.
@@ -67,7 +67,7 @@ You can create a pdbqt formatted file of protein and gpf formatted file containi
 
 Then, the new window for saving of pdbqt file will be opened. Please save it to the working directory.
 
-![Save_PDBQT](https://github.com/jongseo-park/Auto_AutoDock-GPU/blob/master/images/c.gif)
+![Save_PDBQT](https://github.com/jongseo-park/AutoDock-GPU_for_batch/blob/master/images/c.gif)
 
 <br/>
 
@@ -79,7 +79,7 @@ In that programv (pmv), you are also able to obtain the gpf formatted file as fo
 
 Please refer the gif image below. Then, you can save the gpf file for the grid you want.
 
-![Save_GPF](https://github.com/jongseo-park/Auto_AutoDock-GPU/blob/master/images/b.gif)
+![Save_GPF](https://github.com/jongseo-park/AutoDock-GPU_for_batch/blob/master/images/b.gif)
 
 <br/>
 
