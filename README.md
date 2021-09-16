@@ -102,7 +102,7 @@ When I run this script, I prepare the directories named ***'protein'*** and ***'
 
 In the ***'protein'*** directory, the prepared **'fld'** formatted file with several **'map'** files are located,
 
-and in the ***'ligand'*** directory, the ligand files formatted in pdbqt are located.
+and in the ***'ligands'*** directory, the ligand files formatted in pdbqt are located.
 
 
     Working_dir/
@@ -156,15 +156,22 @@ If you need, you can convert the .dlg files to .pdbqt files using `dlg2qt`.
 
 <br/>
 
-You can use `splitligs` tools as follows.
+### **step 1**
+
+You can use `splitligs` as follows.
+
+Then, the merged ligand files will be splitted into each file.
 
     python3 autodock_gpu_for_batch.py
     --splitligs y
     --ligandpath ./merged_ligs/                # Path to the directory 
                                                # containing merged ligands
 
+<br/>
 
-You can use `listgen` tools as follows.
+### **step 2**
+
+For creating the list.txt file, use `listgen` as follows.
 
     python3 autodock_gpu_for_batch.py
     --listgen y
@@ -172,17 +179,26 @@ You can use `listgen` tools as follows.
     --ligandpath ./ligands/                    # Path to the directory containing ligands
     --ligandfmt pdbqt                          # Format of ligand files
 
+<br/>
+
+### **step 3**
+
 For running the AutoDock-GPU in batch mode, use this command in the result directory.
 
     autodock_gpu_128wi -filelist ../list.txt
 
-After finish the doking, you can use `result2txt` tools to organize results.
+<br/>
+
+### **step 4**
+
+After finish the doking, you can use `result2txt` to organize results.
 
     python3 autodock_gpu_for_batch.py
     --result2txt y
     --txtpath ./result/                        # Set the path you want
     --dlgpath ./result/                        # Path to the directory containing dlg files
 
+<br/>
 
 You can also use `dlg2qt` tools as follows.
 
