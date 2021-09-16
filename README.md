@@ -182,9 +182,9 @@ For creating the list.txt file, use `listgen` as follows.
 The list file is comprised of the path to protein, path to ligand, and the job name as follows.
 
 
-    ./protein/protein.maps.fld
-    ./ligands/ligand_1.pdbqt
-    ligand_1
+    ./protein/protein.maps.fld                 # Path to protein.maps.fld
+    ./ligands/ligand_1.pdbqt                   # Path to ligand
+    ligand_1                                   # Job name
     ./ligands/ligand_2.pdbqt
     ligand_2
     ./ligands/ligand_3.pdbqt
