@@ -14,6 +14,7 @@ parser.add_argument("--dlgpath", required=False, default=None, help="Path to dlg
 parser.add_argument("--ligandfmt", required=False, default="pdbqt", help="Format of the ligand files")
 parser.add_argument("--vinapath", required=False, default="/opt/vina/", help="Path to autodock_vina")
 parser.add_argument("--txtpath", required=False, default="./", help="Path to the directory for result.txt")
+parser.add_argument("--listpath", required=False, default="./", help="Path to list.txt.txt")
 
 # Select 
 parser.add_argument("--listgen", required=False, default="n", help="Generate list for docking (y/n)")
@@ -27,13 +28,13 @@ args = parser.parse_args()
 
 
 # Fns
-def listgen (proteinpath=args.proteinpath, ligandpath=args.ligandpath, ligandfmt=args.ligandfmt):
+def listgen (proteinpath=args.proteinpath, ligandpath=args.ligandpath, ligandfmt=args.ligandfmt, listpath=args.listpath):
 
     path = ligandpath
     file_list = os.listdir(path)
     file_list_ligands = [file for file in file_list if file.endswith(ligandfmt)]
 
-    with open ('./list.txt', 'a') as file:
+    with open (f'{listpath}/list.txt', 'a') as file:
         file.write(proteinpath + "\n")
         for i in file_list_ligands:
             j = i.replace("." + ligandfmt, "")
