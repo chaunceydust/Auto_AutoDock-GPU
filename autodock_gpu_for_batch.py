@@ -2,6 +2,7 @@ import os
 import argparse
 
 
+
 parser = argparse.ArgumentParser (description="Tools for high-throughput docking screening using autodock-gpu")
 
 # General arguments
@@ -9,12 +10,10 @@ parser.add_argument("--proteinpath", required=False, default=None, help="Set the
 parser.add_argument("--ligandpath", required=False, default=None, help="Set the path to directory containing ligands")
 parser.add_argument("--dlgpath", required=False, default=None, help="Path to dlg files")
 
-
 # Default setting
 parser.add_argument("--ligandfmt", required=False, default="pdbqt", help="Format of the ligand files")
 parser.add_argument("--vinapath", required=False, default="/opt/vina/", help="Path to autodock_vina")
 parser.add_argument("--txtpath", required=False, default="./", help="Path to the directory for result.txt")
-
 
 # Select 
 parser.add_argument("--listgen", required=False, default="n", help="Generate list for docking (y/n)")
@@ -22,14 +21,13 @@ parser.add_argument("--dlg2qt", required=False, default="n", help="Dlg-to-pdbqt 
 parser.add_argument("--splitligs", required=False, default="n", help="Ligand split (y/n)")
 parser.add_argument("--result2txt", required=False, default="n", help="Merge data (y/n)")
 
-
 args = parser.parse_args()
 
 
 
-# Fns
 
-def listmaker(proteinpath=args.proteinpath, ligandpath=args.ligandpath, ligandfmt=args.ligandfmt):
+# Fns
+def listgen (proteinpath=args.proteinpath, ligandpath=args.ligandpath, ligandfmt=args.ligandfmt):
 
     path = ligandpath
     file_list = os.listdir(path)
@@ -38,17 +36,17 @@ def listmaker(proteinpath=args.proteinpath, ligandpath=args.ligandpath, ligandfm
     with open ('./list.txt', 'a') as file:
         file.write(proteinpath + "\n")
         for i in file_list_ligands:
-            j = i.replace(".pdbqt", "")
+            j = i.replace("." + ligandfmt, "")
             file.write(ligandpath + '/' + i + "\n")
             file.write(j + "\n")
 
 
-    print ("* Listmaker - Done !")
+    print ("* Listgen - Done !")
 
 
 
 
-def dlgtopdbqt(dlgpath = args.dlgpath):
+def dlg2qt(dlgpath = args.dlgpath):
 
     path = dlgpath
     file_list3 = os.listdir(path)
@@ -58,12 +56,13 @@ def dlgtopdbqt(dlgpath = args.dlgpath):
         dst = os.path.splitext(ligs3)[0]
         os.system(f"grep '^DOCKED' {ligs3} | cut -c9- > {dst}.pdbqt")
 
+
     print ("* Dlg-to-pdbqt - Done !")
 
 
 
 
-def vinasplit (vinapath = args.vinapath, ligandpath=args.ligandpath):
+def splitligs (vinapath = args.vinapath, ligandpath=args.ligandpath):
 
     path = ligandpath
     file_list = os.listdir(path)
@@ -75,11 +74,12 @@ def vinasplit (vinapath = args.vinapath, ligandpath=args.ligandpath):
         os.system(f"{vinapath}/vina_split --input {ligandpath}/{lig}")
         os.system(f"mv {ligandpath}/{lig} {ligandpath}/ligand_original/")
 
+
     print ("* Ligand split - done !")
 
 
 
-# data_merged
+
 def result2txt (txtpath = args.txtpath, dlgpath = args.dlgpath):
 
     path = dlgpath
@@ -115,13 +115,17 @@ def result2txt (txtpath = args.txtpath, dlgpath = args.dlgpath):
                 file.write("-----")
                 file.writelines(lines2[35:])
 
+
     print ("* Result merge - Done !")
 
+
+
+############################################################
 
 if __name__ == '__main__':
     if args.listgen == 'y' and args.dlg2qt == 'n' and args.splitligs == 'n' and args.result2txt == 'n':
         print ('*** Requirements: proteinpath / ligandpath / ligandfmt')
-        listmaker (
+        listgen (
             proteinpath = args.proteinpath, 
             ligandpath=args.ligandpath,
             ligandfmt=args.ligandfmt
@@ -129,13 +133,13 @@ if __name__ == '__main__':
 
     elif args.listgen == 'n' and args.dlg2qt == 'y' and args.splitligs == 'n' and args.result2txt == 'n':
         print ('*** Requirement: dlgpath')
-        dlgtopdbqt (
+        dlg2qt (
             dlgpath = args.dlgpath
         )
 
     elif args.listgen == 'n' and args.dlg2qt == 'n' and args.splitligs == 'y' and args.result2txt == 'n':
         print ('*** Requirement: ligandpath')
-        vinasplit (
+        splitligs (
             vinapath = args.vinapath, 
             ligandpath=args.ligandpath
         )
