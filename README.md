@@ -162,6 +162,11 @@ You can use `splitligs` as follows.
 
 Then, the merged ligand files will be splitted into each file.
 
+I have confirmed that `splitligs` works well with the merged pdbqt formatted files,
+
+but in the case of other file formats such as sdf, I cannot guarantee the operation.
+
+
     python3 autodock_gpu_for_batch.py
     --splitligs y
     --ligandpath ./merged_ligs/                # Path to the directory 
@@ -177,10 +182,13 @@ For creating the list.txt file, use `listgen` as follows.
     --listgen y
     --proteinpath ./protein/protein.maps.fld   # Path to the maps.fld file
     --ligandpath ./ligands/                    # Path to the directory containing ligands
-    --ligandfmt pdbqt                          # Format of ligand files
 
-The list file is comprised of the path to protein, path to ligand, and the job name as follows.
 
+The list file is comprised of the path to protein, path to ligand, and the job name.
+
+Generated list.txt file comprises of a line of the path to protein,
+
+and several lines of the path to ligand and job names.
 
     ./protein/protein.maps.fld                 # Path to protein.maps.fld
     ./ligands/ligand_1.pdbqt                   # Path to ligand
@@ -201,6 +209,9 @@ The list file is comprised of the path to protein, path to ligand, and the job n
 
 For running the AutoDock-GPU in batch mode, use this command in the result directory.
 
+    autodock_gpu_128wi -filelist /path/to/list
+    
+    # example
     autodock_gpu_128wi -filelist ../list.txt
 
 <br/>
@@ -234,13 +245,6 @@ You can check all of the arguments with the explanation using this command.
 
 <br/>
 
-
 - - -
-## ***And ...***
-
-Since I am a structural biologist, but not a computational biologist, this script which I wrote might not be fancy or cause error. So, feel free to contact me, and tell or give advice about the coding.
-
-<br/>
-<br/>
 
 *Thanks.*
