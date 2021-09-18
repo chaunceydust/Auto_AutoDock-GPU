@@ -202,6 +202,9 @@ and several lines of the path to ligand and job names.
     ./ligands/ligand_n.pdbqt
     ligand_n
     
+You can also specify the path to list.txt files using `--listpath` argument.
+
+Default path is `./`.
 
 <br/>
 
