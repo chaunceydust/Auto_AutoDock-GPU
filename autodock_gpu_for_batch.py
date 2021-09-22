@@ -2,6 +2,7 @@ import os
 import argparse
 from xml.etree.ElementTree import parse
 import pandas as pd
+import time
 
 
 parser = argparse.ArgumentParser (description="Tools for high-throughput docking screening using autodock-gpu")
@@ -83,10 +84,11 @@ def splitligs (vinapath = args.vinapath, ligandpath=args.ligandpath):
 
 
 def result2df (dfpath = args.dfpath, dlgpath = args.dlgpath):
-
+    i = 1
     path = dlgpath
     file_list = os.listdir(path)
     file_list_outputs = [file for file in file_list if file.endswith(".xml")]
+    leng = len(file_list_outputs)
 
     if dfpath != "./":
         os.mkdir(f"{dfpath}")
@@ -95,6 +97,7 @@ def result2df (dfpath = args.dfpath, dlgpath = args.dlgpath):
         pass
 
     df = pd.DataFrame (columns=['file name', 'Lowest_binding_energy', 'Mean_binding_energy', 'ZINC'])
+    df2_ls = []
 
     for ligs in file_list_outputs:
         tree = parse(f'{ligs}')
@@ -111,9 +114,19 @@ def result2df (dfpath = args.dfpath, dlgpath = args.dlgpath):
         k = ligs.replace("xml", "dlg")
         with open (f"./{k}", "r") as data2:
             
-            lines2 = data2.readlines()[78]
+            lines = data2.readlines()[78]
+            lines2 = lines[35:]
 
-        df = df.append(pd.DataFrame([[l, lb, mb, lines2]], columns=['file name', 'Lowest_binding_energy', 'Mean_binding_energy', 'ZINC']), ignore_index=True)
+        # df = df.append(pd.DataFrame([[l, lb, mb, lines2]], columns=['file name', 'Lowest_binding_energy', 'Mean_binding_energy', 'ZINC']), ignore_index=True)
+
+        df2 = pd.DataFrame([[l, lb, mb, lines2]], columns=['file name', 'Lowest_binding_energy', 'Mean_binding_energy', 'ZINC'])
+        df2_ls.append(df2)
+
+        i += 1
+        ratio = i/leng * 100
+        print (ratio, '%')
+
+    df = pd.concat(df2_ls, ignore_index=True)
 
     df.to_csv(f'./{dfpath}/result_merged.csv')
 
@@ -125,6 +138,9 @@ def result2df (dfpath = args.dfpath, dlgpath = args.dlgpath):
 ############################################################
 
 if __name__ == '__main__':
+
+    start = time.time()
+
     if args.listgen == 'y' and args.dlg2qt == 'n' and args.splitligs == 'n' and args.result2txt == 'n':
         print ('*** Requirements: proteinpath / ligandpath / ligandfmt')
         listgen (
@@ -156,3 +172,6 @@ if __name__ == '__main__':
 
     else:
         print ("*** Please choose one out of [splitligs / listgen / result2df / dlg2qt]")
+
+    
+    print ('Elapsed time: ', time.time() - start)
