@@ -228,6 +228,9 @@ After finish the doking, you can use `result2txt` to organize results.
     --txtpath ./result/                        # Set the path you want
     --dlgpath ./result/                        # Path to the directory containing dlg files
 
+Using the result txt file, you can re-organize and analyze the data with MS Excel (or program you want).
+
+
 <br/>
 
 You can also use `dlg2qt` tools as follows.
