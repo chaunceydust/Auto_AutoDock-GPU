@@ -14,7 +14,7 @@ Please refer to the explanation below.
 
 - - -
 
-This script has four tools, `listgen` / `dlg2qt` / `splitligs` / `result2txt`, for docking.
+This script has four tools, `listgen` / `dlg2qt` / `splitligs` / `result2df`, for docking.
 
 <br/>
 
@@ -24,7 +24,7 @@ This script has four tools, `listgen` / `dlg2qt` / `splitligs` / `result2txt`, f
 
 `splitligs`: Split the merged ligand files downloaded from the ZINC database into each file.
 
-`result2txt`: Organize the highest score among each result into a text file.
+`result2df`: Organize the highest score among each result into a pandas dataframe csv file.
 
 - - -
 
@@ -133,7 +133,7 @@ and in the ***'ligands'*** directory, the ligand files formatted in pdbqt are lo
 
 ### **4. Run the docker container from the image with mounting of the working directory**
 
-    docker run -it --gpus all -v "/path/to/working/directory/:/home/run/" jongseopark/autodock_gpu_js:v01
+    docker run -it --gpus all -v "/path/to/working/directory/:/home/run/" jongseopark/autodock_gpu_js:v02
 
 <br/>
 
@@ -142,17 +142,19 @@ and in the ***'ligands'*** directory, the ligand files formatted in pdbqt are lo
 Run the script with various arguments.
 
 
-You have to choose one argument out of `splitligs` / `listgen` / `result2txt` / `dlg2qt`.
+You have to choose one argument out of `splitligs` / `listgen` / `result2df` / `dlg2qt`.
 
 The workflow is ...
 
 1. If you need, run the `splitligs`.
 2. Generate the list.txt file for running AutoDock-GPU in batch mode using `listgen`.
 3. Run the AutoDock-GPU in batch mode.
-4. Organize the highest score among each result into a text file using `result2txt`.
+4. Organize the highest score among each result into a text file using `result2df`.
 If you need, you can convert the .dlg files to .pdbqt files using `dlg2qt`.
 
+you can pull the script as follows in the docker container.
 
+    wget https://raw.githubusercontent.com/jongseo-park/AutoDock-GPU_for_batch/master/autodock_gpu_for_batch.py
 
 <br/>
 
@@ -221,14 +223,14 @@ For running the AutoDock-GPU in batch mode, use this command in the result direc
 
 ### **step 4**
 
-After finish the doking, you can use `result2txt` to organize results.
+After finish the doking, you can use `result2df` to organize results.
 
     python3 autodock_gpu_for_batch.py
-    --result2txt y
-    --txtpath ./result/                        # Set the path you want
+    --result2df y
+    --dfpath ./result/                         # Set the path you want
     --dlgpath ./result/                        # Path to the directory containing dlg files
 
-Using the result txt file, you can re-organize and analyze the data with MS Excel (or program you want).
+In the result directory, you can find a pandas dataframe csv file (result_merged.csv).
 
 
 <br/>
