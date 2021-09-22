@@ -21,6 +21,7 @@ parser.add_argument("--listgen", required=False, default="n", help="Generate lis
 parser.add_argument("--dlg2qt", required=False, default="n", help="Dlg-to-pdbqt convert only (y/n)")
 parser.add_argument("--splitligs", required=False, default="n", help="Ligand split (y/n)")
 parser.add_argument("--result2txt", required=False, default="n", help="Merge data (y/n)")
+parser.add_argument("--result2txt_p", required=False, default="n", help="Merge partial data (y/n)")
 
 args = parser.parse_args()
 
@@ -81,7 +82,7 @@ def splitligs (vinapath = args.vinapath, ligandpath=args.ligandpath):
 
 
 
-def result2txt (txtpath = args.txtpath, dlgpath = args.dlgpath):
+def result2txt_p (txtpath = args.txtpath, dlgpath = args.dlgpath):
 
     path = dlgpath
     file_list = os.listdir(path)
@@ -93,7 +94,7 @@ def result2txt (txtpath = args.txtpath, dlgpath = args.dlgpath):
     else:
         pass
 
-    with open (f"{txtpath}/result_merged.txt", "wt") as file:
+    with open (f"{txtpath}/result_merged_p.txt", "wt") as file:
 
          for ligs in file_list_outputs:
             with open (f"./{ligs}", "r") as data:
@@ -117,6 +118,43 @@ def result2txt (txtpath = args.txtpath, dlgpath = args.dlgpath):
                 file.writelines(lines2[35:])
 
 
+
+def result2txt (txtpath = args.txtpath, dlgpath = args.dlgpath):
+
+    path = dlgpath
+    file_list = os.listdir(path)
+    file_list_outputs = [file for file in file_list if file.endswith(".xml")]
+
+    if txtpath != "./":
+        os.mkdir(f"{txtpath}")
+    
+    else:
+        pass
+
+    with open (f"{txtpath}/result_merged.txt", "wt") as file:
+
+         for ligs in file_list_outputs:
+            with open (f"./{ligs}", "r") as data:
+                l = ligs.replace("xml", "pdbqt")
+
+                lines = data.readlines()[3]
+                lines1 = lines.rstrip("\n")
+                
+                file.write(l)
+                file.write("-----")
+                file.writelines(lines1)
+
+                k = ligs.replace("xml", "dlg")
+            with open (f"./{k}", "r") as data2:
+                
+                lines2 = data2.readlines()[78]
+
+                file.write("-----")
+                file.writelines(lines2)
+
+
+
+
     print ("* Result merge - Done !")
 
 
@@ -124,7 +162,7 @@ def result2txt (txtpath = args.txtpath, dlgpath = args.dlgpath):
 ############################################################
 
 if __name__ == '__main__':
-    if args.listgen == 'y' and args.dlg2qt == 'n' and args.splitligs == 'n' and args.result2txt == 'n':
+    if args.listgen == 'y' and args.dlg2qt == 'n' and args.splitligs == 'n' and args.result2txt == 'n' and args.result2txt_p == 'n':
         print ('*** Requirements: proteinpath / ligandpath / ligandfmt')
         listgen (
             proteinpath = args.proteinpath, 
@@ -132,22 +170,29 @@ if __name__ == '__main__':
             ligandfmt=args.ligandfmt
         )
 
-    elif args.listgen == 'n' and args.dlg2qt == 'y' and args.splitligs == 'n' and args.result2txt == 'n':
+    elif args.listgen == 'n' and args.dlg2qt == 'y' and args.splitligs == 'n' and args.result2txt == 'n' and args.result2txt_p == 'n':
         print ('*** Requirement: dlgpath')
         dlg2qt (
             dlgpath = args.dlgpath
         )
 
-    elif args.listgen == 'n' and args.dlg2qt == 'n' and args.splitligs == 'y' and args.result2txt == 'n':
+    elif args.listgen == 'n' and args.dlg2qt == 'n' and args.splitligs == 'y' and args.result2txt == 'n' and args.result2txt_p == 'n':
         print ('*** Requirement: ligandpath')
         splitligs (
             vinapath = args.vinapath, 
             ligandpath=args.ligandpath
         )
 
-    elif args.listgen == 'n' and args.dlg2qt == 'n' and args.splitligs == 'n' and args.result2txt == 'y':
+    elif args.listgen == 'n' and args.dlg2qt == 'n' and args.splitligs == 'n' and args.result2txt == 'y' and args.result2txt_p == 'n':
         print ('*** Requiremenst: txtpath / dlgpath')
         result2txt (
+            txtpath = args.txtpath, 
+            dlgpath = args.dlgpath
+        )
+
+    elif args.listgen == 'n' and args.dlg2qt == 'n' and args.splitligs == 'n' and args.result2txt == 'n' and args.result2txt_p == 'y':
+        print ('*** Requiremenst: txtpath / dlgpath')
+        result2txt_p (
             txtpath = args.txtpath, 
             dlgpath = args.dlgpath
         )
