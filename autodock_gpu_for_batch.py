@@ -1,6 +1,7 @@
 import os
 import argparse
-
+from xml.etree.ElementTree import parse
+import pandas as pd
 
 
 parser = argparse.ArgumentParser (description="Tools for high-throughput docking screening using autodock-gpu")
@@ -13,15 +14,14 @@ parser.add_argument("--dlgpath", required=False, default=None, help="Path to dlg
 # Default setting
 parser.add_argument("--ligandfmt", required=False, default="pdbqt", help="Format of the ligand files")
 parser.add_argument("--vinapath", required=False, default="/opt/vina/", help="Path to autodock_vina")
-parser.add_argument("--txtpath", required=False, default="./", help="Path to the directory for result.txt")
+parser.add_argument("--dfpath", required=False, default="./", help="Path to the directory for result.df")
 parser.add_argument("--listpath", required=False, default="./", help="Path to list.txt.txt")
 
 # Select 
 parser.add_argument("--listgen", required=False, default="n", help="Generate list for docking (y/n)")
 parser.add_argument("--dlg2qt", required=False, default="n", help="Dlg-to-pdbqt convert only (y/n)")
 parser.add_argument("--splitligs", required=False, default="n", help="Ligand split (y/n)")
-parser.add_argument("--result2txt", required=False, default="n", help="Merge data (y/n)")
-parser.add_argument("--result2txt_p", required=False, default="n", help="Merge partial data (y/n)")
+parser.add_argument("--result2df", required=False, default="n", help="Merge data (y/n)")
 
 args = parser.parse_args()
 
@@ -82,87 +82,50 @@ def splitligs (vinapath = args.vinapath, ligandpath=args.ligandpath):
 
 
 
-def result2txt_p (txtpath = args.txtpath, dlgpath = args.dlgpath):
+def result2df (dfpath = args.dfpath, dlgpath = args.dlgpath):
 
     path = dlgpath
     file_list = os.listdir(path)
     file_list_outputs = [file for file in file_list if file.endswith(".xml")]
 
-    if txtpath != "./":
-        os.mkdir(f"{txtpath}")
+    if dfpath != "./":
+        os.mkdir(f"{dfpath}")
     
     else:
         pass
 
-    with open (f"{txtpath}/result_merged_p.txt", "wt") as file:
+    df = pd.DataFrame (columns=['file name', 'Lowest_binding_energy', 'Mean_binding_energy', 'ZINC'])
 
-         for ligs in file_list_outputs:
-            with open (f"./{ligs}", "r") as data:
-                l = ligs.replace("xml", "pdbqt")
-
-                lines = data.readlines()[3]
-                lines1 = lines.rstrip("\n")
-                
-                file.write(l)
-                file.write("-----")
-                file.writelines(lines1[28:57])
-                file.write("-----")
-                file.writelines(lines1[66:-19])
-
-                k = ligs.replace("xml", "dlg")
-            with open (f"./{k}", "r") as data2:
-                
-                lines2 = data2.readlines()[78]
-
-                file.write("-----")
-                file.writelines(lines2[35:])
+    for ligs in file_list_outputs:
+        tree = parse(f'{ligs}')
+        root = tree.getroot()
+        cluhis = root.findall ('clustering_histogram')
 
 
-
-def result2txt (txtpath = args.txtpath, dlgpath = args.dlgpath):
-
-    path = dlgpath
-    file_list = os.listdir(path)
-    file_list_outputs = [file for file in file_list if file.endswith(".xml")]
-
-    if txtpath != "./":
-        os.mkdir(f"{txtpath}")
-    
-    else:
-        pass
-
-    with open (f"{txtpath}/result_merged.txt", "wt") as file:
-
-         for ligs in file_list_outputs:
-            with open (f"./{ligs}", "r") as data:
-                l = ligs.replace("xml", "pdbqt")
-
-                lines = data.readlines()[3]
-                lines1 = lines.rstrip("\n")
-                
-                file.write(l)
-                file.write("-----")
-                file.writelines(lines1)
-
-                k = ligs.replace("xml", "dlg")
-            with open (f"./{k}", "r") as data2:
-                
-                lines2 = data2.readlines()[78]
-
-                file.write("-----")
-                file.writelines(lines2)
+        score = [x.find('cluster').attrib for x in cluhis][0]
+        lb = score['lowest_binding_energy']
+        mb = score['mean_binding_energy']
+        l = ligs.replace("xml", "pdbqt")
 
 
+        k = ligs.replace("xml", "dlg")
+        with open (f"./{k}", "r") as data2:
+            
+            lines2 = data2.readlines()[78]
 
+        df = df.append(pd.DataFrame([[l, lb, mb, lines2]], columns=['file name', 'Lowest_binding_energy', 'Mean_binding_energy', 'ZINC']), ignore_index=True)
+
+    df.to_csv(f'./{dfpath}/result_merged.csv')
 
     print ("* Result merge - Done !")
+
 
 
 
 ############################################################
 
 if __name__ == '__main__':
-    if args.listgen == 'y' and args.dlg2qt == 'n' and args.splitligs == 'n' and args.result2txt == 'n' and args.result2txt_p == 'n':
+    if args.listgen == 'y' and args.dlg2qt == 'n' and args.splitligs == 'n' and args.result2txt == 'n':
         print ('*** Requirements: proteinpath / ligandpath / ligandfmt')
         listgen (
             proteinpath = args.proteinpath, 
@@ -170,32 +133,26 @@ if __name__ == '__main__':
             ligandfmt=args.ligandfmt
         )
 
-    elif args.listgen == 'n' and args.dlg2qt == 'y' and args.splitligs == 'n' and args.result2txt == 'n' and args.result2txt_p == 'n':
+    elif args.listgen == 'n' and args.dlg2qt == 'y' and args.splitligs == 'n' and args.result2df == 'n':
         print ('*** Requirement: dlgpath')
         dlg2qt (
             dlgpath = args.dlgpath
         )
 
-    elif args.listgen == 'n' and args.dlg2qt == 'n' and args.splitligs == 'y' and args.result2txt == 'n' and args.result2txt_p == 'n':
+    elif args.listgen == 'n' and args.dlg2qt == 'n' and args.splitligs == 'y' and args.result2df == 'n':
         print ('*** Requirement: ligandpath')
         splitligs (
             vinapath = args.vinapath, 
             ligandpath=args.ligandpath
         )
 
-    elif args.listgen == 'n' and args.dlg2qt == 'n' and args.splitligs == 'n' and args.result2txt == 'y' and args.result2txt_p == 'n':
-        print ('*** Requiremenst: txtpath / dlgpath')
-        result2txt (
-            txtpath = args.txtpath, 
+    elif args.listgen == 'n' and args.dlg2qt == 'n' and args.splitligs == 'n' and args.result2df == 'y':
+        print ('*** Requirements: dfpath / dlgpath')
+        result2df (
+            dfpath = args.dfpath, 
             dlgpath = args.dlgpath
         )
 
-    elif args.listgen == 'n' and args.dlg2qt == 'n' and args.splitligs == 'n' and args.result2txt == 'n' and args.result2txt_p == 'y':
-        print ('*** Requiremenst: txtpath / dlgpath')
-        result2txt_p (
-            txtpath = args.txtpath, 
-            dlgpath = args.dlgpath
-        )
 
     else:
-        print ("*** Please choose one out of [splitligs / listgen / result2txt / dlg2qt]")
+        print ("*** Please choose one out of [splitligs / listgen / result2df / dlg2qt]")
