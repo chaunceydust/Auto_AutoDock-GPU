@@ -254,7 +254,7 @@ if __name__ == '__main__':
         data_original = pd.read_csv(args.dfpath)
 
         dt = parallelize_dataframe(data_original, zincparsing)
-        dt.to_csv(f'{args.dst}')        
+        dt.reset_index(drop=True).to_csv(f'{args.dst}')        
 
         print ('* Parsing - Done !')
 
