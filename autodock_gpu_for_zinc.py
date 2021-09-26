@@ -41,6 +41,7 @@ parser.add_argument("--dlg2qt", required=False, default="n", help="Dlg-to-pdbqt 
 parser.add_argument("--splitligs", required=False, default="n", help="Ligand split (y/n)")
 parser.add_argument("--result2df", required=False, default="n", help="Merge data (y/n)")
 parser.add_argument("--znparsing", required=False, default="n", help="Parse ZINC db (y/n)")
+parser.add_argument("--rearr", required=False, default="n", help="Rearrange result (y/n)")
 args = parser.parse_args()
 
 
@@ -96,7 +97,7 @@ def splitligs (vinapath = args.vinapath, ligandpath=args.ligandpath):
     print ("* Ligand split - done !")
 
 
-def result2df (dfpath = args.dfpath, dlgpath = args.dlgpath, set = args.setnum):
+def result2df (dfpath = args.dfpath, dlgpath = args.dlgpath, set = args.setnum, rearr = args.rearr):
     i = 1
     path = dlgpath
     file_list = os.listdir(path)
@@ -119,8 +120,8 @@ def result2df (dfpath = args.dfpath, dlgpath = args.dlgpath, set = args.setnum):
 
 
         score = [x.find('cluster').attrib for x in cluhis][0]
-        lb = score['lowest_binding_energy']
-        mb = score['mean_binding_energy']
+        lb = float(score['lowest_binding_energy'])
+        mb = float(score['mean_binding_energy'])
         l = ligs.replace("xml", "pdbqt")
 
 
@@ -144,7 +145,14 @@ def result2df (dfpath = args.dfpath, dlgpath = args.dlgpath, set = args.setnum):
 
     df = pd.concat(df2_ls, ignore_index=True)
 
-    df.to_csv(f'./{dfpath}/result_merged.csv')
+    if rearr == 'n':
+        pass
+        
+    else:
+        # data rearrange
+        df = pd.concat([df[df['Lowest_binding_energy'] < 0].sort_values(by=['Lowest_binding_energy']), df[df['Lowest_binding_energy'] >= 0].sort_values(by=['Lowest_binding_energy'], ascending=True)])
+        
+    df.reset_index(drop=True).to_csv(f'./{dfpath}/result_merged.csv')
 
     print ("* Result merge - Done !")
 
@@ -254,7 +262,14 @@ if __name__ == '__main__':
         data_original = pd.read_csv(args.dfpath)
 
         dt = parallelize_dataframe(data_original, zincparsing)
-        dt.reset_index(drop=True).to_csv(f'{args.dst}')        
+
+        if args.rearr == 'n':
+            pass
+
+        else:
+            dt = pd.concat([dt[dt['Lowest_E'] < 0].sort_values(by=['Lowest_E']), dt[dt['Lowest_E'] >= 0].sort_values(by=['Lowest_E'], ascending=True)])
+
+        dt.reset_index(drop=True).to_csv(f'{args.dst}')
 
         print ('* Parsing - Done !')
 
