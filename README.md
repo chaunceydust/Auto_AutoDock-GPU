@@ -27,7 +27,11 @@ In the case of ligand files, you can download the pdbqt formatted files from the
 
 This script has five tools, `splitligs` / `listgen` / `result2df` / `dlg2qt` / `znparsing`, for docking and organizing results.
 
+or you can use `oneclick` tool for using the pipeline automatically.
+
 <br/>
+
+`oneclick`: Run **[splitligs > listgen > result2df > znparsing]** automatically
 
 `splitligs`: Split the merged ligand files downloaded from the ZINC database into each file.
 
@@ -105,8 +109,7 @@ In the terminal, enter the directory containing pdbqt and gpf files, and use thi
 
     autogrid4 -p yourprotein.gpf -l yourprotein.glg
 
-Now, finally, the input files for receptor will be created in the same directory.
-
+Now, finally, the input files for receptor will be created in the same directory. 
 
 <br/>
 
@@ -154,7 +157,7 @@ and in the ***'ligands'*** directory, the ligand files formatted in pdbqt are lo
 Run the script with various arguments.
 
 
-You have to choose one argument out of `splitligs` / `listgen` / `result2df` / `dlg2qt` / `znparsing`.
+You have to choose one argument out of `splitligs` / `listgen` / `result2df` / `dlg2qt` / `znparsing` (+ alpha: `oneclick`)
 
 The workflow is ...
 
@@ -172,6 +175,82 @@ you can pull the script as follows in the docker container.
     wget https://raw.githubusercontent.com/jongseo-park/AutoDock-GPU_for_batch/master/autodock_gpu_for_zinc.py
 
 <br/>
+
+- - -
+
+### ***Automatic running***
+
+
+You can use the `oneclick` tool to automatically generate list, dock ligands, organize results, and parse chemical information from ZINC database.
+
+Just prepare the `.maps.fld` file and `merged ligand` downloaded from ZINC database.
+
+And set the directory as follows
+
+    Working_dir/
+
+        autodock_gpu_for_zinc.py          # The script in this repository
+
+        protein/                             
+            protein.maps.fld
+            protein.A.map
+            protein.C.map
+            protein.Br.map
+            ...
+
+        ligands/
+            merged_ligands.pdbqt (or sdf format)
+            ...
+
+<br/>
+
+Then, run just one command in docker container.
+
+    python3 autodock_gpu_for_zinc.py
+    --oneclick y
+    --proteinpath ./protein/protein.maps.fld/
+    --ligandpath ./ligands/
+    --ligandfmt pdbqt (or sdf)               
+    --np 60                                  
+
+You can find the result in the `./result/` directory.
+
+In that directory, there are two csv files (result_merged.csv / result_merged_parsing.csv).
+
+The result_merged_parsing.csv file comprises 
+
+file name / ZINC codes / several chemical informations / etc.
+
+- - -
+### ***Sequential running*** 
+<br/>
+
+### **step 0**
+
+Directory setup
+
+    Working_dir/
+
+        result/
+            autodock_gpu_for_zinc.py          # The script in this repository
+
+        protein/                             
+            protein.maps.fld
+            protein.A.map
+            protein.C.map
+            protein.Br.map
+            ...
+
+        ligands/
+            ligand_1.pdbqt
+            ligand_2.pdbqt
+            ...
+            ligand_n.pdbqt
+
+        merged_ligs/
+            merged_ligands.pdbqt
+            ...
+
 
 ### **step 1**
 
@@ -306,7 +385,6 @@ I recommend the finding of the optimal np value using small dataset.
 You can check all of the arguments with the explanation using this command.
 
     python3 autodock_gpu_for_zinc.py -h
-
 
 <br/>
 
