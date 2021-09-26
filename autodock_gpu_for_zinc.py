@@ -1,5 +1,6 @@
 # sys
 import os
+import sys
 import time
 import argparse
 
@@ -42,6 +43,14 @@ parser.add_argument("--splitligs", required=False, default="n", help="Ligand spl
 parser.add_argument("--result2df", required=False, default="n", help="Merge data (y/n)")
 parser.add_argument("--znparsing", required=False, default="n", help="Parse ZINC db (y/n)")
 parser.add_argument("--rearr", required=False, default="n", help="Rearrange result (y/n)")
+parser.add_argument("--obabel", required=False, default="n", help="Convert ligand (y/n)")
+
+# one-click
+parser.add_argument("--oneclick", required=False, default="n", help="Go (y/n)")
+
+# Sorting
+parser.add_argument("--lipinski", required=False, default="n", help="Sort data based on the lipinski's rule (y/n)")
+
 args = parser.parse_args()
 
 
@@ -156,6 +165,159 @@ def result2df (dfpath = args.dfpath, dlgpath = args.dlgpath, set = args.setnum, 
 
     print ("* Result merge - Done !")
 
+# One click
+def oneclick (proteinpath=args.proteinpath, ligandpath=args.ligandpath, set=args.setnum, ligandfmt=args.ligandfmt):
+
+    if ligandfmt == 'sdf':
+
+        # Merge SDF files
+        path = ligandpath
+        file_list = os.listdir(path)
+        file_list_ligands = [file for file in file_list if file.endswith(ligandfmt)]
+
+        for i in file_list_ligands:
+            with open (f'{ligandpath}/{i}', 'r') as i:
+                with open (f'{path}/merged.sdf', 'a') as msdf:
+                    merge = i.readlines()
+                    msdf.writelines(merge)
+
+        # Modify SDF files to generate name as ZINC codes
+        edited_lines = []
+        with open (f'{path}/merged.sdf', 'r') as mer_sdf:
+            i = 1
+            lines = mer_sdf.readlines()
+            for line in lines:
+                if '>  <zinc_id>' in line:
+                    edited_lines.append(f'>  <name>  ({i})' + '\n')
+                    i += 1
+
+                else:
+                    edited_lines.append(line)
+
+        with open (f'{path}/merged1.sdf', 'w') as file2:
+            file2.writelines(edited_lines)
+            os.system(f'rm -rf {path}/merged.sdf && mv {path}/merged1.sdf {path}/merged.sdf')
+
+        # Convert ligand format from SDF to PDBQT
+        os.mkdir(f'{ligandpath}/ligand_original')
+
+        i = 'merged.sdf'
+        j = i.replace(f'.{ligandfmt}', '.pdbqt')
+        pdbqt = open(f'{ligandpath}/ligand_original/{j}', 'w')
+        os.system(f'obabel -i{ligandfmt} {ligandpath}/{i} -O {ligandpath}/{j}')
+        os.system(f"mv {ligandpath}/{i} {ligandpath}/ligand_original/")
+        pdbqt.close()
+
+        # Split ligands
+        ligandfmt = 'pdbqt'
+        
+        path = ligandpath
+        file_list = os.listdir(path)
+        file_list_ligands = [file for file in file_list if file.endswith(ligandfmt)]
+
+        vinapath = '/opt/vina/'
+
+        for lig in file_list_ligands:
+            os.system(f"{vinapath}/vina_split --input {ligandpath}/{lig}")
+            os.system(f"mv {ligandpath}/{lig} {ligandpath}/ligand_original/")
+
+
+    else:
+        # Split ligands
+        ligandfmt = 'pdbqt'
+
+        path = ligandpath
+        file_list = os.listdir(path)
+        file_list_ligands = [file for file in file_list if file.endswith(ligandfmt)]
+
+        vinapath = '/opt/vina/'
+
+        os.mkdir(f'{ligandpath}/ligand_original')
+
+        for lig in file_list_ligands:
+            os.system(f"{vinapath}/vina_split --input {ligandpath}/{lig}")
+            os.system(f"mv {ligandpath}/{lig} {ligandpath}/ligand_original/")
+
+
+    print ('* Ligand split - done !')
+    
+
+    # listgen
+    ligandfmt = 'pdbqt'
+    path = ligandpath
+    file_list = os.listdir(path)
+    
+    file_list_ligands = [file for file in file_list if file.endswith(ligandfmt)]
+
+    with open (f'./list.txt', 'a') as file:
+        file.write(proteinpath + "\n")
+        for i in file_list_ligands:
+            j = i.replace("." + ligandfmt, "")
+            file.write(ligandpath + '/' + i + "\n")
+            file.write(j + "\n")
+
+    print ('* List generation - done !')
+
+
+    # run autodock
+    os.system('autodock_gpu_128wi -filelist ./list.txt')
+
+    print ('* Docking - done !')
+
+
+    # result-to-df
+    i = 1
+    path = './'
+    file_list = os.listdir(path)
+    file_list_outputs = [file for file in file_list if file.endswith(".xml")]
+    leng = len(file_list_outputs) + 1
+
+
+    os.mkdir('./result/')
+
+
+    df = pd.DataFrame (columns=['file name', 'Lowest_binding_energy', 'Mean_binding_energy', 'ZINC', 'set'])
+    df2_ls = []
+
+    for ligs in file_list_outputs:
+        tree = parse(f'{ligs}')
+        root = tree.getroot()
+        cluhis = root.findall ('clustering_histogram')
+
+
+        score = [x.find('cluster').attrib for x in cluhis][0]
+        lb = float(score['lowest_binding_energy'])
+        mb = float(score['mean_binding_energy'])
+        l = ligs.replace("xml", "pdbqt")
+
+
+        k = ligs.replace("xml", "dlg")
+        with open (f"./{k}", "r") as data2:
+            
+            lines = data2.readlines()[78]
+            lines2 = lines[35:].replace('\n', '')
+
+        # df = df.append(pd.DataFrame([[l, lb, mb, lines2]], columns=['file name', 'Lowest_binding_energy', 'Mean_binding_energy', 'ZINC']), ignore_index=True)
+        # l: pdbqt
+        # lb: lowest binding energy
+        # mb: mean binding energy
+        # lines2: ZINC code
+        df2 = pd.DataFrame([[l, lb, mb, lines2, set]], columns=['file name', 'Lowest_binding_energy', 'Mean_binding_energy', 'ZINC', 'set'])
+        df2_ls.append(df2)
+
+        i += 1
+        ratio = i/leng * 100
+        print (ratio, '%')
+
+    df = pd.concat(df2_ls, ignore_index=True)
+
+    # data rearrange
+    df = pd.concat([df[df['Lowest_binding_energy'] < 0].sort_values(by=['Lowest_binding_energy']), df[df['Lowest_binding_energy'] >= 0].sort_values(by=['Lowest_binding_energy'], ascending=True)])
+        
+    df.reset_index(drop=True).to_csv(f'./result/result_merged.csv')
+
+    print ("* Result merge - Done !")
+
 
 def zincparsing (data):
 
@@ -222,13 +384,31 @@ def parallelize_dataframe(dt, func):
     return dt
 
 
+# convert format
+def openbabel(ligandpath=args.ligandpath, ligandfmt=args.ligandfmt):
+    path = ligandpath
+    file_list = os.listdir(path)
+    file_list_ligands = [file for file in file_list if file.endswith(ligandfmt)]
+
+    os.mkdir(f'{ligandpath}/ligand_original')
+    for i in file_list_ligands:
+        j = i.replace(f'.{ligandfmt}', '.pdbqt')
+        pdbqt = open(f'./ligand_converted/{i}.pdbqt')
+        os.system(f'obabel -i{ligandfmt} ./{i} -O ./{j}')
+        os.system(f"mv {ligandpath}/{i} {ligandpath}/ligand_original/")
+        pdbqt.close()
+
+    print ('* openbabel - done !')
+
+
+
 ############################################################
 
 if __name__ == '__main__':
 
     start = time.time()
 
-    if args.listgen == 'y' and args.dlg2qt == 'n' and args.splitligs == 'n' and args.result2txt == 'n' and args.znparsing == 'n':
+    if args.listgen == 'y' and args.dlg2qt == 'n' and args.splitligs == 'n' and args.result2txt == 'n' and args.znparsing == 'n' and args.oneclick == 'n' and args.obabel == 'n':
         print ('*** Requirements: proteinpath / ligandpath / ligandfmt')
         listgen (
             proteinpath = args.proteinpath, 
@@ -236,27 +416,27 @@ if __name__ == '__main__':
             ligandfmt=args.ligandfmt
         )
 
-    elif args.listgen == 'n' and args.dlg2qt == 'y' and args.splitligs == 'n' and args.result2df == 'n' and args.znparsing == 'n':
+    elif args.listgen == 'n' and args.dlg2qt == 'y' and args.splitligs == 'n' and args.result2df == 'n' and args.znparsing == 'n' and args.oneclick == 'n' and args.obabel == 'n':
         print ('*** Requirement: dlgpath')
         dlg2qt (
             dlgpath = args.dlgpath
         )
 
-    elif args.listgen == 'n' and args.dlg2qt == 'n' and args.splitligs == 'y' and args.result2df == 'n' and args.znparsing == 'n':
+    elif args.listgen == 'n' and args.dlg2qt == 'n' and args.splitligs == 'y' and args.result2df == 'n' and args.znparsing == 'n' and args.oneclick == 'n' and args.obabel == 'n':
         print ('*** Requirement: ligandpath')
         splitligs (
             vinapath = args.vinapath, 
             ligandpath=args.ligandpath
         )
 
-    elif args.listgen == 'n' and args.dlg2qt == 'n' and args.splitligs == 'n' and args.result2df == 'y' and args.znparsing == 'n':
+    elif args.listgen == 'n' and args.dlg2qt == 'n' and args.splitligs == 'n' and args.result2df == 'y' and args.znparsing == 'n' and args.oneclick == 'n' and args.obabel == 'n':
         print ('*** Requirements: dfpath / dlgpath')
         result2df (
             dfpath = args.dfpath, 
             dlgpath = args.dlgpath
         )
 
-    elif args.listgen == 'n' and args.dlg2qt == 'n' and args.splitligs == 'n' and args.result2df == 'n' and args.znparsing == 'y':
+    elif args.listgen == 'n' and args.dlg2qt == 'n' and args.splitligs == 'n' and args.result2df == 'n' and args.znparsing == 'y' and args.oneclick == 'n' and args.obabel == 'n':
         print ('*** Requirements: dfpath / np / dst')
 
         data_original = pd.read_csv(args.dfpath)
@@ -271,8 +451,36 @@ if __name__ == '__main__':
 
         dt.reset_index(drop=True).to_csv(f'{args.dst}')
 
-        print ('* Parsing - Done !')
+        print ('* ZINC parsing - done !')
 
+
+    elif args.listgen == 'n' and args.dlg2qt == 'n' and args.splitligs == 'n' and args.result2df == 'n' and args.znparsing == 'n' and args.oneclick == 'y' and args.obabel == 'n':
+
+        print('Ligand split >> List generation >> Docking >> Result merge >> ZINC parsing')
+
+        oneclick (
+            proteinpath=args.proteinpath, 
+            ligandpath=args.ligandpath,
+            set=args.setnum, 
+            ligandfmt=args.ligandfmt
+            )
+
+        data_original = pd.read_csv('./result/result_merged.csv')
+        dt = parallelize_dataframe(data_original, zincparsing)
+        dt.reset_index(drop=True).to_csv(f'./result/result_merged_parsing.csv')
+
+        print ('* ZINC parsing - done !')
+
+        print ('* You can find the result in ./result/ directory.')
+
+    elif args.listgen == 'n' and args.dlg2qt == 'n' and args.splitligs == 'n' and args.result2df == 'n' and args.znparsing == 'n' and args.oneclick == 'n' and args.obabel == 'y':
+        print ('*** Requirements: ligandpath / ligandfmt')
+        openbabel(
+            ligandpath=args.ligandpath, 
+            ligandfmt=args.ligandfmt
+        )
+
+        
 
     else:
         print ("*** Please choose one out of [splitligs / listgen / result2df / dlg2qt]")
