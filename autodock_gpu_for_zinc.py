@@ -49,7 +49,7 @@ parser.add_argument("--obabel", required=False, default="n", help="Convert ligan
 parser.add_argument("--oneclick", required=False, default="n", help="Go (y/n)")
 
 # Sorting
-parser.add_argument("--lipinski", required=False, default="n", help="Sort data based on the lipinski's rule (y/n)")
+# parser.add_argument("--lipinski", required=False, default="n", help="Sort data based on the lipinski's rule (y/n)")
 
 args = parser.parse_args()
 
@@ -140,7 +140,6 @@ def result2df (dfpath = args.dfpath, dlgpath = args.dlgpath, set = args.setnum, 
             lines = data2.readlines()[78]
             lines2 = lines[35:].replace('\n', '')
 
-        # df = df.append(pd.DataFrame([[l, lb, mb, lines2]], columns=['file name', 'Lowest_binding_energy', 'Mean_binding_energy', 'ZINC']), ignore_index=True)
         # l: pdbqt
         # lb: lowest binding energy
         # mb: mean binding energy
@@ -203,10 +202,8 @@ def oneclick (proteinpath=args.proteinpath, ligandpath=args.ligandpath, set=args
 
         i = 'merged.sdf'
         j = i.replace(f'.{ligandfmt}', '.pdbqt')
-        pdbqt = open(f'{ligandpath}/ligand_original/{j}', 'w')
-        os.system(f'obabel -i{ligandfmt} {ligandpath}/{i} -O {ligandpath}/{j}')
+        os.system(f'obabel -i{ligandfmt} {ligandpath}/{i} -opdbqt -O {ligandpath}/{j} --AddPolarH --partialcharge mmff94')
         os.system(f"mv {ligandpath}/{i} {ligandpath}/ligand_original/")
-        pdbqt.close()
 
         # Split ligands
         ligandfmt = 'pdbqt'
@@ -221,6 +218,41 @@ def oneclick (proteinpath=args.proteinpath, ligandpath=args.ligandpath, set=args
             os.system(f"{vinapath}/vina_split --input {ligandpath}/{lig}")
             os.system(f"mv {ligandpath}/{lig} {ligandpath}/ligand_original/")
 
+
+    elif ligandfmt == 'smi':
+
+        # Merge smi files
+        path = ligandpath
+        file_list = os.listdir(path)
+        file_list_ligands = [file for file in file_list if file.endswith(ligandfmt)]
+
+        for i in file_list_ligands:
+            with open (f'{ligandpath}/{i}', 'r') as i:
+                with open (f'{path}/merged.smi', 'a') as msdf:
+                    merge = i.readlines()
+                    msdf.writelines(merge)
+
+        # Convert ligand format from SDF to PDBQT
+        os.mkdir(f'{ligandpath}/ligand_original')
+
+        i = 'merged.smi'
+        j = i.replace(f'.{ligandfmt}', '.pdbqt')
+        os.system(f'obabel -i{ligandfmt} {ligandpath}/{i} -opdbqt --gen3d -O {ligandpath}/{j} --AddPolarH --partialcharge mmff94')
+        os.system(f"mv {ligandpath}/{i} {ligandpath}/ligand_original/")
+
+        # Split ligands
+        ligandfmt = 'pdbqt'
+        
+        path = ligandpath
+        file_list = os.listdir(path)
+        file_list_ligands = [file for file in file_list if file.endswith(ligandfmt)]
+
+        vinapath = '/opt/vina/'
+
+        for lig in file_list_ligands:
+            os.system(f"{vinapath}/vina_split --input {ligandpath}/{lig}")
+            os.system(f"mv {ligandpath}/{lig} {ligandpath}/ligand_original/")
+    
 
     else:
         # Split ligands
@@ -297,7 +329,6 @@ def oneclick (proteinpath=args.proteinpath, ligandpath=args.ligandpath, set=args
             lines = data2.readlines()[78]
             lines2 = lines[35:].replace('\n', '')
 
-        # df = df.append(pd.DataFrame([[l, lb, mb, lines2]], columns=['file name', 'Lowest_binding_energy', 'Mean_binding_energy', 'ZINC']), ignore_index=True)
         # l: pdbqt
         # lb: lowest binding energy
         # mb: mean binding energy
@@ -360,13 +391,11 @@ def zincparsing (data):
             df2_ls.append(df2)
             
             print (f'[{i}/{leng}]: {zinc} --- Done !')
-            # log.write(f'[{i}/{leng}]: {zinc} --- Done !' + '\n')
             i += 1
             
         
         except (AttributeError, TypeError, ValueError):
             print (f'[{i}/{leng}]: {zinc} --- Error !')
-            # log.write(f'[{i}/{leng}]: {zinc} --- Error !' + '\n')
             i += 1
 
     df = pd.concat(df2_ls, ignore_index=True)
@@ -386,21 +415,31 @@ def parallelize_dataframe(dt, func):
 
 # convert format
 def openbabel(ligandpath=args.ligandpath, ligandfmt=args.ligandfmt):
+
     path = ligandpath
     file_list = os.listdir(path)
     file_list_ligands = [file for file in file_list if file.endswith(ligandfmt)]
 
     os.mkdir(f'{ligandpath}/ligand_original')
-    for i in file_list_ligands:
-        j = i.replace(f'.{ligandfmt}', '.pdbqt')
-        pdbqt = open(f'./ligand_converted/{i}.pdbqt')
-        os.system(f'obabel -i{ligandfmt} ./{i} -O ./{j}')
-        os.system(f"mv {ligandpath}/{i} {ligandpath}/ligand_original/")
-        pdbqt.close()
 
-    print ('* openbabel - done !')
+    if ligandfmt == 'smi':
+        for i in file_list_ligands:
+            j = i.replace(f'.{ligandfmt}', '.pdbqt')
+            os.system(f'obabel -i{ligandfmt} ./{i} -opdbqt --gen3d -O ./{j} --AddPolarH --partialcharge mmff94')
+            os.system(f"mv {ligandpath}/{i} {ligandpath}/ligand_original/")
+        print ('* openbabel - done !')
 
+    elif ligandfmt == 'sdf':
+        for i in file_list_ligands:
+            j = i.replace(f'.{ligandfmt}', '.pdbqt')
+            os.system(f'obabel -i{ligandfmt} ./{i} -opdbqt -O ./{j} --AddPolarH --partialcharge mmff94')
+            os.system(f"mv {ligandpath}/{i} {ligandpath}/ligand_original/")
+        print ('* openbabel - done !')
 
+    else:
+        print ('Please select suitable format (smi or sdf)')
+
+    
 
 ############################################################
 
@@ -408,7 +447,7 @@ if __name__ == '__main__':
 
     start = time.time()
 
-    if args.listgen == 'y' and args.dlg2qt == 'n' and args.splitligs == 'n' and args.result2txt == 'n' and args.znparsing == 'n' and args.oneclick == 'n' and args.obabel == 'n':
+    if args.listgen == 'y' and args.dlg2qt == 'n' and args.splitligs == 'n' and args.result2df == 'n' and args.znparsing == 'n' and args.oneclick == 'n' and args.obabel == 'n':
         print ('*** Requirements: proteinpath / ligandpath / ligandfmt')
         listgen (
             proteinpath = args.proteinpath, 
@@ -479,8 +518,6 @@ if __name__ == '__main__':
             ligandpath=args.ligandpath, 
             ligandfmt=args.ligandfmt
         )
-
-        
 
     else:
         print ("*** Please choose one out of [splitligs / listgen / result2df / dlg2qt]")

@@ -124,7 +124,7 @@ and in the ***'ligands'*** directory, the ligand files formatted in pdbqt are lo
 
     Working_dir/
 
-        result/
+        run/
             autodock_gpu_for_zinc.py          # The script in this repository
 
         protein/                             
@@ -189,7 +189,8 @@ And set the directory as follows
 
     Working_dir/
 
-        autodock_gpu_for_zinc.py          # The script in this repository
+        run/
+            autodock_gpu_for_zinc.py          # The script in this repository
 
         protein/                             
             protein.maps.fld
@@ -199,7 +200,7 @@ And set the directory as follows
             ...
 
         ligands/
-            merged_ligands.pdbqt (or sdf format)
+            merged_ligands.pdbqt (or sdf / smi format)
             ...
 
 <br/>
@@ -210,7 +211,7 @@ Then, run just one command in docker container.
     --oneclick y
     --proteinpath ./protein/protein.maps.fld/
     --ligandpath ./ligands/
-    --ligandfmt pdbqt (or sdf)               
+    --ligandfmt pdbqt (or sdf / smi)               
     --np 60                                  
 
 You can find the result in the `./result/` directory.
@@ -221,8 +222,14 @@ The result_merged_parsing.csv file comprises
 
 file name / ZINC codes / several chemical informations / etc.
 
+<br/>
+
+* In the case of SMILE string (smi format), please note that there are unexpected errors sometimes.
+* SDF or pdbqt formatted files are recommended as inputs.
+
 - - -
 ### ***Sequential running*** 
+
 <br/>
 
 ### **step 0**
@@ -231,7 +238,7 @@ Directory setup
 
     Working_dir/
 
-        result/
+        run/
             autodock_gpu_for_zinc.py          # The script in this repository
 
         protein/                             
@@ -378,6 +385,25 @@ If you set the `--rearr` argument to `y`, then the *Lowest_E* will be sorted in 
 The number of cores for running the `znparsing` can be declared using `--np` argument.
 
 I recommend the finding of the optimal np value using small dataset. 
+
+<br/>
+
+### **plus alpha**
+
+You can use openbabel directly in the docker container, or use `--obabel` argument as follows.
+
+    python3 autodock_gpu_for_zinc.py
+    --obabel y
+    --ligandpath /path/to/ligands (eg. ./ligands/)
+    --ligandfmt sdf (or smi)
+
+Then, sdf (or smi) formatted ligand files will be converted to the pdbqt files.
+
+You can also use openbabel in the docker container yourself as follows.
+
+    obabel -isdf ./ligands/ligand.sdf -opdbqt -O ./ligands/ligands.pdbqt --AddPolarH --partialcharge mmff94
+
+    obabel -ismi ./ligands/ligand.smi -opdbqt -O ./ligands/ligands.pdbqt --gen3d --AddPolarH --partialcharge mmff94
 
 
 <br/>
