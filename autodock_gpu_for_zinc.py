@@ -35,6 +35,7 @@ parser.add_argument("--vinapath", required=False, default="/opt/vina/", help="Pa
 parser.add_argument("--dfpath", required=False, default="./", help="Path to the directory for result.df")
 parser.add_argument("--listpath", required=False, default="./", help="Path to list.txt")
 parser.add_argument("--setnum", required=False, default="1", help="Path to list.txt")
+parser.add_argument("--mergedlig", required=False, default="y", help="Merged ligands ? (y/n)")
 
 # Select 
 parser.add_argument("--listgen", required=False, default="n", help="Generate list for docking (y/n)")
@@ -165,7 +166,7 @@ def result2df (dfpath = args.dfpath, dlgpath = args.dlgpath, set = args.setnum, 
     print ("* Result merge - Done !")
 
 # One click
-def oneclick (proteinpath=args.proteinpath, ligandpath=args.ligandpath, set=args.setnum, ligandfmt=args.ligandfmt):
+def oneclick (proteinpath=args.proteinpath, ligandpath=args.ligandpath, set=args.setnum, ligandfmt=args.ligandfmt, x=args.mergedlig):
 
     if ligandfmt == 'sdf':
 
@@ -205,19 +206,6 @@ def oneclick (proteinpath=args.proteinpath, ligandpath=args.ligandpath, set=args
         os.system(f'obabel -i{ligandfmt} {ligandpath}/{i} -opdbqt -O {ligandpath}/{j} --AddPolarH --partialcharge mmff94')
         os.system(f"mv {ligandpath}/{i} {ligandpath}/ligand_original/")
 
-        # Split ligands
-        ligandfmt = 'pdbqt'
-        
-        path = ligandpath
-        file_list = os.listdir(path)
-        file_list_ligands = [file for file in file_list if file.endswith(ligandfmt)]
-
-        vinapath = '/opt/vina/'
-
-        for lig in file_list_ligands:
-            os.system(f"{vinapath}/vina_split --input {ligandpath}/{lig}")
-            os.system(f"mv {ligandpath}/{lig} {ligandpath}/ligand_original/")
-
 
     elif ligandfmt == 'smi':
 
@@ -239,22 +227,13 @@ def oneclick (proteinpath=args.proteinpath, ligandpath=args.ligandpath, set=args
         j = i.replace(f'.{ligandfmt}', '.pdbqt')
         os.system(f'obabel -i{ligandfmt} {ligandpath}/{i} -opdbqt --gen3d -O {ligandpath}/{j} --AddPolarH --partialcharge mmff94')
         os.system(f"mv {ligandpath}/{i} {ligandpath}/ligand_original/")
-
-        # Split ligands
-        ligandfmt = 'pdbqt'
-        
-        path = ligandpath
-        file_list = os.listdir(path)
-        file_list_ligands = [file for file in file_list if file.endswith(ligandfmt)]
-
-        vinapath = '/opt/vina/'
-
-        for lig in file_list_ligands:
-            os.system(f"{vinapath}/vina_split --input {ligandpath}/{lig}")
-            os.system(f"mv {ligandpath}/{lig} {ligandpath}/ligand_original/")
     
 
     else:
+        os.mkdir(f'{ligandpath}/ligand_original')
+
+       
+    if x == 'y': 
         # Split ligands
         ligandfmt = 'pdbqt'
 
@@ -264,11 +243,12 @@ def oneclick (proteinpath=args.proteinpath, ligandpath=args.ligandpath, set=args
 
         vinapath = '/opt/vina/'
 
-        os.mkdir(f'{ligandpath}/ligand_original')
-
         for lig in file_list_ligands:
             os.system(f"{vinapath}/vina_split --input {ligandpath}/{lig}")
             os.system(f"mv {ligandpath}/{lig} {ligandpath}/ligand_original/")
+
+    else:
+        pass
 
 
     print ('* Ligand split - done !')
@@ -501,7 +481,8 @@ if __name__ == '__main__':
             proteinpath=args.proteinpath, 
             ligandpath=args.ligandpath,
             set=args.setnum, 
-            ligandfmt=args.ligandfmt
+            ligandfmt=args.ligandfmt,
+            x=args.mergedlig
             )
 
         data_original = pd.read_csv('./result/result_merged.csv')

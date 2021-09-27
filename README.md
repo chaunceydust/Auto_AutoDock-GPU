@@ -211,7 +211,8 @@ Then, run just one command in docker container.
     --oneclick y
     --proteinpath ./protein/protein.maps.fld/
     --ligandpath ./ligands/
-    --ligandfmt pdbqt (or sdf / smi)               
+    --ligandfmt pdbqt (or sdf / smi)           
+    --mergedlig y (or n)                       # non-essential (default: y)              
     --np 60                                  
 
 You can find the result in the `./result/` directory.
@@ -221,6 +222,16 @@ In that directory, there are two csv files (result_merged.csv / result_merged_pa
 The result_merged_parsing.csv file comprises 
 
 file name / ZINC codes / several chemical informations / etc.
+
+<br/>
+
+If you want to run using non-merged ligands such as a single ligand,
+
+you can set the `--mergedlig` argument as `n`.
+
+Then, the ligand splitting will be passed.
+
+
 
 <br/>
 
