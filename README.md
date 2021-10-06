@@ -172,7 +172,7 @@ If you need, you can convert the .dlg files to .pdbqt files using `dlg2qt`.
 
 you can pull the script as follows in the docker container.
 
-    wget https://raw.githubusercontent.com/jongseo-park/AutoDock-GPU_for_batch/master/autodock_gpu_for_zinc.py
+    wget https://raw.githubusercontent.com/jongseo-park/AutoDock-GPU_for_ZINC/master/autodock_gpu_for_zinc.py
 
 <br/>
 
