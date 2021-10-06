@@ -19,6 +19,7 @@ import time
 
 # rdkit _ chirality
 from rdkit import Chem
+from qed import qed
 
 parser = argparse.ArgumentParser (description="Tools for high-throughput docking screening using autodock-gpu")
 
@@ -45,6 +46,7 @@ parser.add_argument("--result2df", required=False, default="n", help="Merge data
 parser.add_argument("--znparsing", required=False, default="n", help="Parse ZINC db (y/n)")
 parser.add_argument("--rearr", required=False, default="n", help="Rearrange result (y/n)")
 parser.add_argument("--obabel", required=False, default="n", help="Convert ligand (y/n)")
+parser.add_argument("--lipinski", required=False, default="n", help="Organize data based on the lipinski's rule")
 
 # one-click
 parser.add_argument("--oneclick", required=False, default="n", help="Go (y/n)")
@@ -150,7 +152,7 @@ def result2df (dfpath = args.dfpath, dlgpath = args.dlgpath, set = args.setnum, 
 
         i += 1
         ratio = i/leng * 100
-        print (ratio, '%')
+        print(f'{ratio:.3f} %')
 
     df = pd.concat(df2_ls, ignore_index=True)
 
@@ -318,7 +320,7 @@ def oneclick (proteinpath=args.proteinpath, ligandpath=args.ligandpath, set=args
 
         i += 1
         ratio = i/leng * 100
-        print (ratio, '%')
+        print(f'{ratio:.3f} %')
 
     df = pd.concat(df2_ls, ignore_index=True)
 
@@ -330,6 +332,17 @@ def oneclick (proteinpath=args.proteinpath, ligandpath=args.ligandpath, set=args
     print ("* Result merge - Done !")
 
 
+def lipinskiplus (dfpath=args.dfpath):
+
+    df = pd.read_csv(f'{dfpath}')
+
+    ndf = df[(df['Mwt'] >= 180) & (df['Mwt'] <= 480) & (df['LogP'] >= -0.4) & (df['LogP'] <= 5.6) & (df['H-donors'] <= 5) & (df['H-acceptors'] <= 10) & (df['Rotatable bonds'] <= 10) & (df['PSA'] <= 120) & (df['Net charge'] == 0) & (df['Num chirals'] == 0)]
+
+    dfpath2 = dfpath.replace('.csv', '_lipinski.csv')
+
+    ndf.reset_index(drop=True).to_csv(dfpath2)
+
+
 def zincparsing (data):
 
     pdbqt = data.iloc[:,1] # pdbqt
@@ -338,7 +351,7 @@ def zincparsing (data):
     ls = data.iloc[:,4] # ZINC code
     set = data.iloc[:,5] # set num
 
-    df = pd.DataFrame (columns=['ZINC', 'pdbqt', 'Lowest_E', 'Mean_E', 'Set', 'Mwt', 'LogP', 'Rotatable bonds', 'H-donors', 'H-acceptors', 'PSA', 'Net charge', 'Num chirals', 'chirals', 'SMILES'])
+    df = pd.DataFrame (columns=['ZINC', 'pdbqt', 'Lowest_E', 'Mean_E', 'Set', 'Mwt', 'LogP', 'Rotatable bonds', 'H-donors', 'H-acceptors', 'PSA', 'Net charge', 'QED_mean', 'Num chirals', 'chirals', 'SMILES'])
 
     leng = len(ls)
     i = 1
@@ -362,11 +375,13 @@ def zincparsing (data):
             
             mol = Chem.MolFromSmiles(smiles)
             chir = Chem.FindMolChiralCenters(mol,force=True,includeUnassigned=True,useLegacyImplementation=True)
+            
+            qmo = str(qed.weights_mean(mol))
 
             num_chirals = len(chir)
             chirals = str(chir)
 
-            df2 = pd.DataFrame([[zinc, o, l, m, n, Mwt, logP, Rbonds, Hdonors, Hacceptors, Psa, NetC, num_chirals, chirals, smiles]], columns=['ZINC', 'pdbqt', 'Lowest_E', 'Mean_E', 'Set', 'Mwt', 'LogP', 'Rotatable bonds', 'H-donors', 'H-acceptors', 'PSA', 'Net charge', 'Num chirals', 'chirals', 'SMILES'])
+            df2 = pd.DataFrame([[zinc, o, l, m, n, Mwt, logP, Rbonds, Hdonors, Hacceptors, Psa, NetC, qmo, num_chirals, chirals, smiles]], columns=['ZINC', 'pdbqt', 'Lowest_E', 'Mean_E', 'Set', 'Mwt', 'LogP', 'Rotatable bonds', 'H-donors', 'H-acceptors', 'PSA', 'Net charge', 'QED_mean', 'Num chirals', 'chirals', 'SMILES'])
 
             df2_ls.append(df2)
             
@@ -427,7 +442,7 @@ if __name__ == '__main__':
 
     start = time.time()
 
-    if args.listgen == 'y' and args.dlg2qt == 'n' and args.splitligs == 'n' and args.result2df == 'n' and args.znparsing == 'n' and args.oneclick == 'n' and args.obabel == 'n':
+    if args.listgen == 'y' and args.dlg2qt == 'n' and args.splitligs == 'n' and args.result2df == 'n' and args.znparsing == 'n' and args.oneclick == 'n' and args.obabel == 'n' and args.lipinski == 'n':
         print ('*** Requirements: proteinpath / ligandpath / ligandfmt')
         listgen (
             proteinpath = args.proteinpath, 
@@ -435,27 +450,27 @@ if __name__ == '__main__':
             ligandfmt=args.ligandfmt
         )
 
-    elif args.listgen == 'n' and args.dlg2qt == 'y' and args.splitligs == 'n' and args.result2df == 'n' and args.znparsing == 'n' and args.oneclick == 'n' and args.obabel == 'n':
+    elif args.listgen == 'n' and args.dlg2qt == 'y' and args.splitligs == 'n' and args.result2df == 'n' and args.znparsing == 'n' and args.oneclick == 'n' and args.obabel == 'n' and args.lipinski == 'n':
         print ('*** Requirement: dlgpath')
         dlg2qt (
             dlgpath = args.dlgpath
         )
 
-    elif args.listgen == 'n' and args.dlg2qt == 'n' and args.splitligs == 'y' and args.result2df == 'n' and args.znparsing == 'n' and args.oneclick == 'n' and args.obabel == 'n':
+    elif args.listgen == 'n' and args.dlg2qt == 'n' and args.splitligs == 'y' and args.result2df == 'n' and args.znparsing == 'n' and args.oneclick == 'n' and args.obabel == 'n' and args.lipinski == 'n':
         print ('*** Requirement: ligandpath')
         splitligs (
             vinapath = args.vinapath, 
             ligandpath=args.ligandpath
         )
 
-    elif args.listgen == 'n' and args.dlg2qt == 'n' and args.splitligs == 'n' and args.result2df == 'y' and args.znparsing == 'n' and args.oneclick == 'n' and args.obabel == 'n':
+    elif args.listgen == 'n' and args.dlg2qt == 'n' and args.splitligs == 'n' and args.result2df == 'y' and args.znparsing == 'n' and args.oneclick == 'n' and args.obabel == 'n' and args.lipinski == 'n':
         print ('*** Requirements: dfpath / dlgpath')
         result2df (
             dfpath = args.dfpath, 
             dlgpath = args.dlgpath
         )
 
-    elif args.listgen == 'n' and args.dlg2qt == 'n' and args.splitligs == 'n' and args.result2df == 'n' and args.znparsing == 'y' and args.oneclick == 'n' and args.obabel == 'n':
+    elif args.listgen == 'n' and args.dlg2qt == 'n' and args.splitligs == 'n' and args.result2df == 'n' and args.znparsing == 'y' and args.oneclick == 'n' and args.obabel == 'n' and args.lipinski == 'n':
         print ('*** Requirements: dfpath / np / dst')
 
         data_original = pd.read_csv(args.dfpath)
@@ -473,7 +488,7 @@ if __name__ == '__main__':
         print ('* ZINC parsing - done !')
 
 
-    elif args.listgen == 'n' and args.dlg2qt == 'n' and args.splitligs == 'n' and args.result2df == 'n' and args.znparsing == 'n' and args.oneclick == 'y' and args.obabel == 'n':
+    elif args.listgen == 'n' and args.dlg2qt == 'n' and args.splitligs == 'n' and args.result2df == 'n' and args.znparsing == 'n' and args.oneclick == 'y' and args.obabel == 'n' and args.lipinski == 'n':
 
         print('Ligand split >> List generation >> Docking >> Result merge >> ZINC parsing')
 
@@ -493,12 +508,18 @@ if __name__ == '__main__':
 
         print ('* You can find the result in ./result/ directory.')
 
-    elif args.listgen == 'n' and args.dlg2qt == 'n' and args.splitligs == 'n' and args.result2df == 'n' and args.znparsing == 'n' and args.oneclick == 'n' and args.obabel == 'y':
+    elif args.listgen == 'n' and args.dlg2qt == 'n' and args.splitligs == 'n' and args.result2df == 'n' and args.znparsing == 'n' and args.oneclick == 'n' and args.obabel == 'y' and args.lipinski == 'n':
         print ('*** Requirements: ligandpath / ligandfmt')
         openbabel(
             ligandpath=args.ligandpath, 
             ligandfmt=args.ligandfmt
         )
+
+    elif args.listgen == 'n' and args.dlg2qt == 'n' and args.splitligs == 'n' and args.result2df == 'n' and args.znparsing == 'n' and args.oneclick == 'n' and args.obabel == 'n' and args.lipinski == 'y':
+        print ('*** Requirements: dfpath')
+        lipinskiplus (
+            dfpath=args.dfpath
+            )
 
     else:
         print ("*** Please choose one out of [splitligs / listgen / result2df / dlg2qt]")
