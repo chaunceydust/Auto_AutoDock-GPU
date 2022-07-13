@@ -1,0 +1,12 @@
+name: autodock_gpu
+channels:
+  - conda-forge
+  - anaconda
+  - defaults
+dependencies:
+  - python=3.10
+  - beautifulsoup4
+  - requests
+  - rdkit
+  - pandas
+  - numpy
