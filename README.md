@@ -23,7 +23,6 @@ docker pull jongseopark/autodock_gpu_js:latest
 ```
 conda env create -f requirements.yml
 conda activate autodock_gpu
-pip install uamc-qed
 ```
 
 <br>
