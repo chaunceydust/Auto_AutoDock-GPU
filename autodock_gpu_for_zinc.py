@@ -35,6 +35,9 @@ parser.add_argument('--fn', required=False, type=str, default='', help='A functi
 parser.add_argument('--csv', required=False, type=str, default='results.csv', help='csv file for data parsing from ZINC database')
 parser.add_argument('--splitnum', required=False, type=int, default=4, help='How many divided list files you want ?')
 
+# test
+parser.add_argument('--qtpath', required=False, type=str, default=None, help='path to pdbqt')
+
 args = parser.parse_args()
 
 
@@ -54,8 +57,9 @@ class RunScript:
         path_check = check.PathCheck(args)
         zn_parsing = postproc.ZINCParsing(args)
         misc = miscellaneous.Misc(args)
+        parallelize = miscellaneous.ParallelRun(args)
 
-        fn_dict = {'listgen':inp.listgen, 'splitligs':inp.split_ligs, 'run_docking':run_docking.autodock_gpu_run, 'dlg2qt':post_proc.dlg2qt, 'result2df':post_proc.result2df, 'znparsing':zn_parsing.fxns_znparsing, 'listsplit':misc.listsplit}
+        fn_dict = {'listgen':inp.listgen, 'splitligs':inp.split_ligs, 'run_docking':run_docking.autodock_gpu_run, 'dlg2qt':post_proc.dlg2qt, 'result2df':post_proc.result2df, 'znparsing':zn_parsing.fxns_znparsing, 'listsplit':misc.listsplit, 'obabel':parallelize.obabel_pararun, 'qedcalc':parallelize.qedcalc_pararun, 'clustering':parallelize.clustering_pararun}
 
         if args.fn in fn_dict:
             fn_ = fn_dict[args.fn]
@@ -75,10 +79,13 @@ class RunScript:
             3) run_docking (listpath, autodockbin, resultpath, gpu)
             4) dlg2qt (resultpath)
             5) result2df (resultpath)
-            6) znparsing (np, csv)
+            6) obabel (csv, qtpath)
+            7) qedcalc (csv)
+            8) clusterting (csv)
 
             - Miscellaneous fxns
             listsplit (listpath, splitnum)
+            znparsing (np, csv)
             '''
 
             print ('Please select/enter the one of functions below and enter it.')
@@ -93,7 +100,7 @@ class RunScript:
         inp = inputprep.InputPrep(self.args)
         run_docking = rundock.RunDock(self.args)
         post_proc = postproc.PostProc(self.args)
-        zn_parsing = postproc.ZINCParsing(self.args)
+        parallelize = miscellaneous.ParallelRun(args)
 
         if self.args.splitligs_dest == True:
             inp.split_ligs()
@@ -104,7 +111,9 @@ class RunScript:
         run_docking.autodock_gpu_run()
         post_proc.dlg2qt()
         post_proc.result2df()
-        zn_parsing.fxns_znparsing()
+        parallelize.obabel_pararun()
+        parallelize.qedcalc_pararun()
+        parallelize.clustering_pararun()
 
         print ('Elapsed time: ', time.time() - start, 'sec')
         quit()
