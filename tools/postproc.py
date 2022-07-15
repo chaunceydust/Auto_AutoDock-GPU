@@ -13,7 +13,6 @@ from bs4 import BeautifulSoup
 import multiprocessing
 
 from rdkit import Chem
-from qed import qed
 
 
 class PostProc:
@@ -153,7 +152,7 @@ class ParallelizeParsing:
                 mol = Chem.MolFromSmiles(smiles)
                 chir = Chem.FindMolChiralCenters(mol,force=True,includeUnassigned=True,useLegacyImplementation=True)
 
-                qmo = str(qed.weights_mean(mol))
+                qmo = str(rdkit.Chem.QED.qed(mol))
 
                 num_chirals = len(chir)
                 chirals = str(chir)
