@@ -45,6 +45,8 @@ class PathCheck:
                             predesignated_paths[key] = self.args.listpath
                             print (f'* {key} set to "{predesignated_paths[key]}" by user')                               
                         
+                elif key == 'qtpath':
+                    pass
 
                 else:
                     if values == None:
