@@ -23,6 +23,7 @@ parser.add_argument('-d', '--resultpath', required=False, type=str, default=None
 parser.add_argument('-lf', '--ligandformat', required=False, type=str, default='pdbqt', help='Format of the ligand files')
 parser.add_argument('-bin', '--autodockbin', required=False, type=str, default='autodock_gpu_128wi', help='Binary file of AutoDock-GPU (bin_file)')
 parser.add_argument('--gpu', required=False, type=int, default=1, help='Which GPU do you use ? (starts at 1)')
+parser.add_argument('--qtpath', required=False, type=str, default=None, help='path to pdbqt (for running obabel)')
 
 # switch
 parser.add_argument('-smi', '--smi', dest='smi_dest', action='store_true')
@@ -32,11 +33,9 @@ parser.add_argument('-c', '--continue', dest='continue_dest', action='store_true
 # etc
 parser.add_argument('--np', required=False, type=int, default=8, help='Number of cores for execute')
 parser.add_argument('--fn', required=False, type=str, default='', help='A function name to use')
-parser.add_argument('--csv', required=False, type=str, default='results.csv', help='csv file for data parsing from ZINC database')
+parser.add_argument('--csv', required=False, type=str, default='results.csv', help='csv file name')
 parser.add_argument('--splitnum', required=False, type=int, default=4, help='How many divided list files you want ?')
 
-# test
-parser.add_argument('--qtpath', required=False, type=str, default=None, help='path to pdbqt')
 
 args = parser.parse_args()
 
@@ -49,17 +48,26 @@ class RunScript:
 
     def fxn_select (self):
 
-        start = time.time()
+        start_init = time.time()
 
         inp = inputprep.InputPrep(args)
         run_docking = rundock.RunDock(args)
-        post_proc = postproc.PostProc(args)
+        result_arrange = postproc.ResultArrange(args)
+        post_proc = postproc.ParallelRun (args)
         path_check = check.PathCheck(args)
-        zn_parsing = postproc.ZINCParsing(args)
         misc = miscellaneous.Misc(args)
-        parallelize = miscellaneous.ParallelRun(args)
-
-        fn_dict = {'listgen':inp.listgen, 'splitligs':inp.split_ligs, 'run_docking':run_docking.autodock_gpu_run, 'dlg2qt':post_proc.dlg2qt, 'result2df':post_proc.result2df, 'znparsing':zn_parsing.fxns_znparsing, 'listsplit':misc.listsplit, 'obabel':parallelize.obabel_pararun, 'qedcalc':parallelize.qedcalc_pararun, 'clustering':parallelize.clustering_pararun}
+        fn_dict = {
+            'listgen':inp.listgen, 
+            'splitligs':inp.split_ligs, 
+            'run_docking':run_docking.autodock_gpu_run, 
+            'dlg2qt':result_arrange.dlg2qt, 
+            'result2df':result_arrange.result2df, 
+            'obabel':post_proc.obabel_pararun, 
+            'qedcalc':post_proc.qedcalc_pararun, 
+            'clustering':post_proc.clustering_pararun, 
+            'znparsing':post_proc.znparsing_pararun, 
+            'listsplit':misc.listsplit
+            }
 
         if args.fn in fn_dict:
             fn_ = fn_dict[args.fn]
@@ -68,9 +76,24 @@ class RunScript:
             args.resultpath = new_path_dict['resultpath']
             args.listpath = new_path_dict['listpath']
             fn_()
-            print ('Elapsed time: ', time.time() - start, 'sec')
+            print ('Elapsed time: ', time.time() - start_init, 'sec')
             quit()
 
+
+        elif args.fn == 'postproc':
+            runlist = ['obabel', 'qedcalc', 'clustering']
+            new_path_dict = path_check.pathcheck()
+            args.vinapath = new_path_dict['vinapath']
+            args.resultpath = new_path_dict['resultpath']
+            args.listpath = new_path_dict['listpath']
+            
+            for i in runlist:
+                fn_ = fn_dict[i]
+                fn_()
+            print ('Elapsed time: ', time.time() - start_init, 'sec')
+            quit()
+
+                
         else:
             fxns = '''
             - Essential fxns
@@ -79,9 +102,12 @@ class RunScript:
             3) run_docking (listpath, autodockbin, resultpath, gpu)
             4) dlg2qt (resultpath)
             5) result2df (resultpath)
-            6) obabel (csv, qtpath)
-            7) qedcalc (csv)
-            8) clusterting (csv)
+            6) obabel (csv, qtpath, np)
+            7) qedcalc (csv, np)
+            8) clusterting (csv, np)
+
+            999) postproc (csv, qtpath, np)
+            >>> obabel - qedcalc - clustering
 
             - Miscellaneous fxns
             listsplit (listpath, splitnum)
@@ -95,12 +121,12 @@ class RunScript:
 
     def auto_run (self):
 
-        start = time.time ()
+        start_init = time.time ()
 
         inp = inputprep.InputPrep(self.args)
         run_docking = rundock.RunDock(self.args)
-        post_proc = postproc.PostProc(self.args)
-        parallelize = miscellaneous.ParallelRun(args)
+        result_arrange = postproc.ResultArrange(args)
+        post_proc = postproc.ParallelRun(args)
 
         if self.args.splitligs_dest == True:
             inp.split_ligs()
@@ -109,13 +135,13 @@ class RunScript:
             
         inp.listgen()
         run_docking.autodock_gpu_run()
-        post_proc.dlg2qt()
-        post_proc.result2df()
-        parallelize.obabel_pararun()
-        parallelize.qedcalc_pararun()
-        parallelize.clustering_pararun()
+        result_arrange.dlg2qt()
+        result_arrange.result2df()
+        post_proc.obabel_pararun()
+        post_proc.qedcalc_pararun()
+        post_proc.clustering_pararun()
 
-        print ('Elapsed time: ', time.time() - start, 'sec')
+        print ('Total elapsed time: ', time.time() - start_init, 'sec')
         quit()
 
 
