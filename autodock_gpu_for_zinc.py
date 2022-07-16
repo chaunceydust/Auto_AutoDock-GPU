@@ -52,7 +52,6 @@ class RunScript:
 
         inp = inputprep.InputPrep(args)
         run_docking = rundock.RunDock(args)
-        result_arrange = postproc.ResultArrange(args)
         post_proc = postproc.ParallelRun (args)
         path_check = check.PathCheck(args)
         misc = miscellaneous.Misc(args)
@@ -60,13 +59,16 @@ class RunScript:
             'listgen':inp.listgen, 
             'splitligs':inp.split_ligs, 
             'run_docking':run_docking.autodock_gpu_run, 
-            'dlg2qt':result_arrange.dlg2qt, 
-            'result2df':result_arrange.result2df, 
+            'dlg2qt':post_proc.dlg2qt_pararun, 
+            'result2df':post_proc.result2df_pararun, 
             'obabel':post_proc.obabel_pararun, 
-            'qedcalc':post_proc.qedcalc_pararun, 
+            'property':post_proc.property_pararun, 
             'clustering':post_proc.clustering_pararun, 
             'znparsing':post_proc.znparsing_pararun, 
-            'listsplit':misc.listsplit
+            'listsplit':misc.listsplit,
+            'value_cutoff':misc.value_cutoff,
+            'scatterplot':misc.scatterplot,
+            'copypdbqt':misc.copypdbqt
             }
 
         if args.fn in fn_dict:
@@ -76,12 +78,12 @@ class RunScript:
             args.resultpath = new_path_dict['resultpath']
             args.listpath = new_path_dict['listpath']
             fn_()
-            print ('Elapsed time: ', time.time() - start_init, 'sec')
+            print ('Total elapsed time: ', time.time() - start_init, 'sec')
             quit()
 
 
         elif args.fn == 'postproc':
-            runlist = ['obabel', 'qedcalc', 'clustering']
+            runlist = ['obabel', 'property', 'clustering', 'value_cutoff', 'scatterplot']
             new_path_dict = path_check.pathcheck()
             args.vinapath = new_path_dict['vinapath']
             args.resultpath = new_path_dict['resultpath']
@@ -90,7 +92,7 @@ class RunScript:
             for i in runlist:
                 fn_ = fn_dict[i]
                 fn_()
-            print ('Elapsed time: ', time.time() - start_init, 'sec')
+            print ('Total elapsed time: ', time.time() - start_init, 'sec')
             quit()
 
                 
@@ -103,15 +105,18 @@ class RunScript:
             4) dlg2qt (resultpath)
             5) result2df (resultpath)
             6) obabel (csv, qtpath, np)
-            7) qedcalc (csv, np)
+            7) property (csv, np)
             8) clusterting (csv, np)
 
             999) postproc (csv, qtpath, np)
-            >>> obabel - qedcalc - clustering
+            >>> obabel - property - clustering - cutoff - scatterplot
 
             - Miscellaneous fxns
             listsplit (listpath, splitnum)
             znparsing (np, csv)
+            value_cutoff (csv)
+            scatterplot (csv)
+            copypdbqt (csv, qtpath)
             '''
 
             print ('Please select/enter the one of functions below and enter it.')
@@ -125,8 +130,8 @@ class RunScript:
 
         inp = inputprep.InputPrep(self.args)
         run_docking = rundock.RunDock(self.args)
-        result_arrange = postproc.ResultArrange(args)
         post_proc = postproc.ParallelRun(args)
+        misc = miscellaneous.Misc(args)
 
         if self.args.splitligs_dest == True:
             inp.split_ligs()
@@ -135,11 +140,13 @@ class RunScript:
             
         inp.listgen()
         run_docking.autodock_gpu_run()
-        result_arrange.dlg2qt()
-        result_arrange.result2df()
+        post_proc.dlg2qt_pararun()
+        post_proc.result2df_pararun()
         post_proc.obabel_pararun()
-        post_proc.qedcalc_pararun()
+        post_proc.property_pararun()
         post_proc.clustering_pararun()
+        misc.value_cutoff()
+        misc.scatterplot()
 
         print ('Total elapsed time: ', time.time() - start_init, 'sec')
         quit()
