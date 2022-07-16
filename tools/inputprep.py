@@ -83,10 +83,10 @@ class InputPrep:
 
         vinapath = os.path.abspath(self.args.vinapath)
 
-        if os.path.isdir(vinapath) == True:
+        if os.path.basename(vinapath) == 'vina_split':
             pass
         else:
-            print ('Please check the vinapath')
+            print ('Please check the vinapath (.../vina_split (bin_file))')
             quit()
 
         newpath = f'{ligandpath}_original'
@@ -97,5 +97,5 @@ class InputPrep:
             pass
 
         for i in ligs_list:
-            os.system(f'{vinapath}/vina_split --input {ligandpath}/{i}')
+            os.system(f'{vinapath} --input {ligandpath}/{i}')
             os.rename(f'{ligandpath}/{i}', f'{newpath}/{i}')

@@ -15,7 +15,7 @@ class PathCheck:
 
         args_dict = vars(self.args)
 
-        predesignated_paths = {'vinapath':'/opt/vina', 'resultpath':'./result', 'listpath':'./list.txt'}
+        predesignated_paths = {'vinapath':'/opt/vina/vina_split', 'resultpath':'./result', 'listpath':'./list.txt'}
 
         if self.args.fn == '': # autorun
             
