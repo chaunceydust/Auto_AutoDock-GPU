@@ -12,6 +12,10 @@ from tools import miscellaneous
 
 parser = argparse.ArgumentParser (description='Tools for high-throughput docking screening using autodock-gpu')
 
+# switch
+parser.add_argument('-smi', '--smi', dest='smi_dest', action='store_true')
+parser.add_argument('-sl', '--splitligs', dest='splitligs_dest', action='store_true')
+
 # path
 parser.add_argument('-p', '--proteinpath', required=False, type=str, default=None, help='Set the path to maps.fld file for receptor (file)')
 parser.add_argument('-l', '--ligandpath', required=False, type=str, default=None, help='Set the path to directory containing ligands (directory)')
@@ -20,14 +24,9 @@ parser.add_argument('-ls', '--listpath', required=False, type=str, default=None,
 parser.add_argument('-d', '--resultpath', required=False, type=str, default=None, help='Set the path to result directory (directory)')
 
 # setting
-# parser.add_argument('-lf', '--ligandformat', required=False, type=str, default='pdbqt', help='Format of the ligand files')
 parser.add_argument('-bin', '--autodockbin', required=False, type=str, default='autodock_gpu_128wi', help='Binary file of AutoDock-GPU (bin_file)')
 parser.add_argument('--gpu', required=False, type=int, default=1, help='Which GPU do you use ? (starts at 1)')
 parser.add_argument('--qtpath', required=False, type=str, default=None, help='path to pdbqt (for running obabel)')
-
-# switch
-parser.add_argument('-smi', '--smi', dest='smi_dest', action='store_true')
-parser.add_argument('-sl', '--splitligs', dest='splitligs_dest', action='store_true')
 
 # etc
 parser.add_argument('--np', required=False, type=int, default=8, help='Number of cores for execute')
@@ -109,15 +108,15 @@ class RunScript:
             8) clusterting (csv, np)
 
             999) postproc (csv, qtpath, np)
-            >>> obabel - property - cutoff - clustering - scatterplot
+            >>> obabel - molproperty - cutoff - clustering - scatterplot
 
             - Miscellaneous fxns
-            smi2pdbqt (ligandpath, np)
-            listsplit (listpath, splitnum)
-            znparsing (np, csv)
-            value_cutoff (csv)
-            scatterplot (csv)
-            copypdbqt (csv, qtpath)
+            10) smi2pdbqt (ligandpath, np)
+            11) listsplit (listpath, splitnum)
+            12) znparsing (np, csv)
+            13) value_cutoff (csv)
+            14) scatterplot (csv)
+            15) copypdbqt (csv, qtpath)
             '''
 
             print ('Please select/enter the one of functions below and enter it.')
