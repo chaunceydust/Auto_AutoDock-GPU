@@ -20,7 +20,7 @@ parser.add_argument('-ls', '--listpath', required=False, type=str, default=None,
 parser.add_argument('-d', '--resultpath', required=False, type=str, default=None, help='Set the path to result directory (directory)')
 
 # setting
-parser.add_argument('-lf', '--ligandformat', required=False, type=str, default='pdbqt', help='Format of the ligand files')
+# parser.add_argument('-lf', '--ligandformat', required=False, type=str, default='pdbqt', help='Format of the ligand files')
 parser.add_argument('-bin', '--autodockbin', required=False, type=str, default='autodock_gpu_128wi', help='Binary file of AutoDock-GPU (bin_file)')
 parser.add_argument('--gpu', required=False, type=int, default=1, help='Which GPU do you use ? (starts at 1)')
 parser.add_argument('--qtpath', required=False, type=str, default=None, help='path to pdbqt (for running obabel)')
@@ -28,7 +28,6 @@ parser.add_argument('--qtpath', required=False, type=str, default=None, help='pa
 # switch
 parser.add_argument('-smi', '--smi', dest='smi_dest', action='store_true')
 parser.add_argument('-sl', '--splitligs', dest='splitligs_dest', action='store_true')
-parser.add_argument('-c', '--continue', dest='continue_dest', action='store_true')
 
 # etc
 parser.add_argument('--np', required=False, type=int, default=8, help='Number of cores for execute')
@@ -56,13 +55,14 @@ class RunScript:
         path_check = check.PathCheck(args)
         misc = miscellaneous.Misc(args)
         fn_dict = {
+            'smi2pdbqt':inp.smi2pdbqt,
             'listgen':inp.listgen, 
             'splitligs':inp.split_ligs, 
             'run_docking':run_docking.autodock_gpu_run, 
             'dlg2qt':post_proc.dlg2qt_pararun, 
             'result2df':post_proc.result2df_pararun, 
             'obabel':post_proc.obabel_pararun, 
-            'property':post_proc.property_pararun, 
+            'molproperty':post_proc.property_pararun, 
             'clustering':post_proc.clustering_pararun, 
             'znparsing':post_proc.znparsing_pararun, 
             'listsplit':misc.listsplit,
@@ -83,14 +83,14 @@ class RunScript:
 
 
         elif args.fn == 'postproc':
-            runlist = ['obabel', 'property', 'clustering', 'value_cutoff', 'scatterplot']
+            runlist = ['obabel', 'molproperty', 'value_cutoff', 'clustering', 'scatterplot']
             new_path_dict = path_check.pathcheck()
             args.vinapath = new_path_dict['vinapath']
             args.resultpath = new_path_dict['resultpath']
             args.listpath = new_path_dict['listpath']
             
             for i in runlist:
-                fn_ = fn_dict[i]
+                fn_ = fn_dict[i]        
                 fn_()
             print ('Total elapsed time: ', time.time() - start_init, 'sec')
             quit()
@@ -105,13 +105,14 @@ class RunScript:
             4) dlg2qt (resultpath)
             5) result2df (resultpath)
             6) obabel (csv, qtpath, np)
-            7) property (csv, np)
+            7) molproperty (csv, np)
             8) clusterting (csv, np)
 
             999) postproc (csv, qtpath, np)
-            >>> obabel - property - clustering - cutoff - scatterplot
+            >>> obabel - property - cutoff - clustering - scatterplot
 
             - Miscellaneous fxns
+            smi2pdbqt (ligandpath, np)
             listsplit (listpath, splitnum)
             znparsing (np, csv)
             value_cutoff (csv)
@@ -144,8 +145,8 @@ class RunScript:
         post_proc.result2df_pararun()
         post_proc.obabel_pararun()
         post_proc.property_pararun()
-        post_proc.clustering_pararun()
         misc.value_cutoff()
+        post_proc.clustering_pararun()
         misc.scatterplot()
 
         print ('Total elapsed time: ', time.time() - start_init, 'sec')
