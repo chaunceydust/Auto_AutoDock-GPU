@@ -31,14 +31,31 @@ class PathCheck:
                         print ('example: --proteinpath /path/to/protein.maps.fld (=.maps.fld file)')
                         quit()
 
-                if key == 'vinapath' or key == 'resultpath' or key == 'listpath' or key == 'autodockbin':
+                if key == 'vinapath':
                     if isinstance (values, NoneType) == True:
-                        print (f'* {key} automatically set to "{predesignated_paths[key]}"')
+                        if self.args.splitligs_dest == True:
+                            print (f'Please insert the vinapath which is one of requirements for using "splitligs(sl)"')
+                            print ('example: --vinapath /path/to/vina_split (=binary_file)')
+                            quit()
+                        else:
+                            print (f'* {key} automatically set to "{predesignated_paths[key]}"')
                     else:
-                        if key == 'vinapath':
-                            predesignated_paths[key] = self.args.vinapath
+                        predesignated_paths[key] = self.args.vinapath
+                        if self.args.splitligs_dest == True:
+                            if os.path.isfile(predesignated_paths[key]) == True:
+                                pass
+                            else:
+                                print (f'Please check the vinapath ** input: {predesignated_paths[key]}')
+                                print ('example: --vinapath /path/to/vina_split (=binary_file)')
+                                quit()
+                        else:
                             print (f'* {key} set to "{predesignated_paths[key]}" by user')
-                        elif key == 'resultpath':
+                    
+                elif key == 'resultpath' or key == 'listpath' or key == 'autodockbin':
+                    if isinstance (values, NoneType) == True:
+                            print (f'* {key} automatically set to "{predesignated_paths[key]}"')
+                    else:
+                        if key == 'resultpath':
                             predesignated_paths[key] = self.args.resultpath
                             print (f'* {key} set to "{predesignated_paths[key]}" by user')                           
                         elif key == 'listpath':
