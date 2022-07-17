@@ -10,5 +10,5 @@ dependencies:
   - rdkit
   - pandas
   - numpy
-  - openbabel
   - tqdm
+  # - openbabel=2.4.1
