@@ -11,6 +11,7 @@ This script helps preparing input files for protein-ligand(from ZINC db) docking
 AutoDock-GPU
 Conda
 autodock-vina
+OpenBabel (2.4.1)
 ```
 
 or you can use the preset docker image for this repository that is using the nvidia-docker.
@@ -24,6 +25,10 @@ docker pull jongseopark/autodock_gpu_js:latest
 conda env create -f requirements.yml
 conda activate autodock_gpu
 ```
+
+*Due to the Python dependency problem, I recommend that you compile openbabel (version 2.4.1) manually, not installing it using conda,*
+
+*or please use the docker image I provide.*
 
 <br>
 <br>
@@ -138,17 +143,16 @@ and in the `ligands` directory, the ligand files formatted in pdbqt are located.
 *flags*
 
 ```
-usage: autodock_gpu_for_zinc.py [-h] [-p PROTEINPATH] [-l LIGANDPATH] [-v VINAPATH] [-ls LISTPATH] [-d RESULTPATH]
-                                [-lf LIGANDFORMAT] [-bin AUTODOCKBIN] [--gpu GPU] [-smi] [-sl] [-c] [--np NP]
-                                [--fn FN] [--csv CSV] [--splitnum SPLITNUM]
-
-
-
+usage: autodock_gpu_for_zinc.py [-h] [-smi] [-sl] [-p PROTEINPATH] [-l LIGANDPATH] [-v VINAPATH]
+                                [-ls LISTPATH] [-d RESULTPATH] [-bin AUTODOCKBIN] [--gpu GPU]
+                                [--qtpath QTPATH] [--np NP] [--fn FN] [--csv CSV] [--splitnum SPLITNUM]
 
 Tools for high-throughput docking screening using autodock-gpu
 
 options:
   -h, --help            show this help message and exit
+  -smi, --smi
+  -sl, --splitligs
   -p PROTEINPATH, --proteinpath PROTEINPATH
                         Set the path to maps.fld file for receptor (file)
   -l LIGANDPATH, --ligandpath LIGANDPATH
@@ -159,17 +163,13 @@ options:
                         Path to list.txt (file)
   -d RESULTPATH, --resultpath RESULTPATH
                         Set the path to result directory (directory)
-  -lf LIGANDFORMAT, --ligandformat LIGANDFORMAT
-                        Format of the ligand files
   -bin AUTODOCKBIN, --autodockbin AUTODOCKBIN
                         Binary file of AutoDock-GPU (bin_file)
   --gpu GPU             Which GPU do you use ? (starts at 1)
-  -smi, --smi
-  -sl, --splitligs
-  -c, --continue
+  --qtpath QTPATH       path to pdbqt (for running obabel)
   --np NP               Number of cores for execute
   --fn FN               A function name to use
-  --csv CSV             csv file for data parsing from ZINC database
+  --csv CSV             csv file name
   --splitnum SPLITNUM   How many divided list files you want ?
 ```
 
@@ -186,6 +186,7 @@ python3 autodock_gpu_for_zinc.py --fn x
 <br>
 
 ```
+
 Please select/enter the one of functions below and enter it.
 
             - Essential fxns
@@ -194,13 +195,24 @@ Please select/enter the one of functions below and enter it.
             3) run_docking (listpath, autodockbin, resultpath, gpu)
             4) dlg2qt (resultpath)
             5) result2df (resultpath)
-            6) znparsing (np, csv)
+            6) obabel (csv, qtpath, np)
+            7) molproperty (csv, np)
+            8) clusterting (csv, np)
+
+            999) postproc (csv, qtpath, np)
+            >>> obabel - molproperty - cutoff - clustering - scatterplot
 
             - Miscellaneous fxns
-            listsplit (listpath, splitnum)
+            10) smi2pdbqt (ligandpath, np)
+            11) listsplit (listpath, splitnum)
+            12) znparsing (np, csv)
+            13) value_cutoff (csv)
+            14) scatterplot (csv)
+            15) copypdbqt (csv, qtpath)
+
 ```
 
-This script has six tools, `splitligs` / `listgen` / `run_docking` / `dlg2qt` / `result2df` / `znparsing`, for docking and organizing results.
+This script has six tools, `splitligs` / `listgen` / `run_docking` / `dlg2qt` / `result2df` / `postproc`, for docking and organizing results.
 
 <br/>
 
@@ -214,13 +226,14 @@ This script has six tools, `splitligs` / `listgen` / `run_docking` / `dlg2qt` / 
 
 `result2df`: Organize the highest score among each result into a pandas dataframe and save it to csv file.
 
-`znparsing`: Collect the detailed information about ligands from ZINC database using web crawling tool, and organize into the csv file.
+`postproc`: Calculate the detailed information about chemicals using rdkit.
 
-You can use these functions one by one when you enter the specific function name using argument `--fn`
+You can use these functions one by one when you enter the specific function name in argument `--fn`,
 
-If you want to perform protein-ligand docking from ligand split to data arrangement, 
+and if you want to perform protein-ligand docking automatically, 
 
-then do not enter the `--fn` argument.
+then you don't need to enter the `--fn` argument.
+
 
 <br>
 
@@ -249,30 +262,29 @@ python3 autodock_gpu_for_zinc.py \
 When you enter the command for entire process, you can see the check list in your terminal window.
 
 ```
- 
-* vinapath set to "/opt/programs/autodock_vina/bin/" by user
-* listpath automatically set to "./list.txt"
+* vinapath set to "/opt/programs/autodock_vina/bin/vina_split" by user
+* listpath set to "./list.txt" by user
 * resultpath automatically set to "./result"
+* autodockbin set to "/opt/programs/AutoDock-GPU/bin/autodock_gpu_64wi" by user
  
 Input arguments are correct !
 -----------------------------
 [proteinpath] ./protein/protein.maps.fld
 [ligandpath] ./ligands
-[vinapath] /opt/programs/autodock_vina/bin/
+[vinapath] /opt/programs/autodock_vina/bin/vina_split
 [listpath] ./list.txt
 [resultpath] ./result
-[ligandformat] pdbqt
 [autodockbin] /opt/programs/AutoDock-GPU/bin/autodock_gpu_64wi
 [gpu] 1
+[qtpath] None
 [smi_dest] False
-[splitligs_dest] True
-[continue_dest] False
+[splitligs_dest] False
 [np] 8
 [fn] 
 [csv] results.csv
 [splitnum] 4
 -----------------------------
-Please check your inputs before continuing !! (y / n): 
+Please check your inputs before continuing !! (y / n):
 
 ```
 
@@ -282,11 +294,17 @@ If they are correct, enter `y` in the terminal window, then docking will begin.
 
 <br/>
 
-When the job is completed, then you can find the csv file in the working directory
+When the job is completed, then you can find several csv files in the working directory
 
-that contains several detailed information such as
+that contains several detailed information.
 
-`QED` / `Lowest_E` / `LogP` / `Mwt` / `Rotatable bonds` / `H-donors` / `H-acceptors` / `PSA` / `Net charge` / `Chiral centers & nums` / `Smile string` .
+Final version of the csv files will be named to as `result_postproc.csv` and `result_postproc_original.csv`.
+
+`result_postproc_original.csv`: raw data
+`result_postproc.csv`: cut-off data (QED > 0.7 / Lowest_E < -7.0)
+
+
+
 
 <br>
 
@@ -301,7 +319,7 @@ At that time, you can specify a split number using the argument `--splitnum`, th
 
 <br>
 
-For multiple GPUs, you can specify the GPU number to use through the argument `--gpu` when run the AutoDock-GPU using the function `--run_docking`.
+For multiple GPUs, you can specify the GPU number to use through the argument `--gpu` when run the AutoDock-GPU using the function `--fn run_docking`.
 
 Keep in mind that the input number for `--gpu` starts at 1, not 0.
 
@@ -316,10 +334,16 @@ Collectively ...
 <br>
 
 #### *ZINC parsing*
-When you use the function `znparsing`, you can set the number of processes to parsing information through the argument `--np`.
+When you use the function `znparsing` which collect serveral chemical information from ZINC database, 
+
+you can set the number of processes to parsing information through the argument `--np`.
 
 This argument does not mean the number of cores, but it means how many jobs will be running to parsing data from ZINC database.
 
 You can set this value as a high enough number such as 50, 100, ...
 
+I usually use `--np 60`
+
 - - -
+
+If you find any bug, please feel free to contact me.
