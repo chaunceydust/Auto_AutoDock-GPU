@@ -1,8 +1,10 @@
-# ***AutoDock-GPU_for_ZINC***
+# ***Auto_AutoDock-GPU***
 
-This script helps preparing input files for protein-ligand(from ZINC db) docking using AutoDock-GPU in batch mode, as well as merging results and parsing detailed information about ligands.
+This script helps preparing input files for protein-ligand (usually from ZINC db?) docking using AutoDock-GPU in batch mode, as well as merging results and parsing detailed information about ligands.
 
 *[AutoDock-GPU GitHub](https://github.com/ccsb-scripps/AutoDock-GPU)*
+
+You can use smi or pdbqt formatted ligand files.
 
 <br/>
 
