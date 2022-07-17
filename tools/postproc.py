@@ -25,14 +25,13 @@ from rdkit.Chem import Descriptors
 from rdkit.Chem import QED
 from rdkit.SimDivFilters import rdSimDivPickers
 
-# from qed import qed
-
 
 class Parallel:
 
     def __init__ (self, args):
 
         self.args = args
+
 
     def dlg2qt_func (self, ls):
 
@@ -42,6 +41,7 @@ class Parallel:
         for i in tqdm(ls):
             dst = os.path.splitext(i)[0]
             os.system(f'grep "^DOCKED" {resultpath}/{i} | cut -c9- > {qt_path}/{dst}.pdbqt')
+
 
     def result2df_func (self, ls):
 
@@ -84,7 +84,8 @@ class Parallel:
                 df2_ls.append(df2)  
 
             except:
-                pass
+                df2 = pd.DataFrame([[name_pdbqt, lowest_E, mean_E]], columns=['description', 'Lowest_binding_energy', 'Mean_binding_energy'])
+                df2_ls.append(df2)  
 
         new_df = pd.concat(df2_ls, ignore_index=True)
 
@@ -148,8 +149,7 @@ class Parallel:
                 chirals = str(chir)
 
             except (ArgumentError, ValueError):
-                print (f'There is a problem with the SMILE string of {j}')
-                print (f'{j} was ignored')
+                continue
 
             df2 = pd.DataFrame([[j, qmo, logp, mwt, rot_bonds, Hdonor, Hacceptor, tPSA, charge, chirals, num_chirals]], columns=['description', 'QED_mean', 'LogP', 'Mwt', 'Rotatable_bonds', 'H_donors', 'H_acceptors', 'tPSA', 'Net_charge', 'Chiral_centers', 'Num_chirals'])
             df2_ls.append(df2)
@@ -203,8 +203,11 @@ class Parallel:
         picks = lp.LazyBitVectorPick(list(fps.values()), len(fps), threshold)
 
         print ('Num. subsets: ',len(picks))
+        print ('Threshold for subset config: ',threshold)
+        print ('* If you want to change the threshold,')
+        print ('* please find the "threshold" in tools/postproc.py')
         mid_time_1 = time.time()
-        print ('Elapsed time of subset generation: ', mid_time_1 - start, 'sec')
+        print ('[Subset gen] Elapsed time: ', mid_time_1 - start, 'sec')
 
         def assignPointsToClusters(picks, fps):
             from collections import defaultdict
@@ -251,7 +254,7 @@ class Parallel:
         df_merge.dropna(axis=0).to_csv(csv)
 
         mid_time_2 = time.time()
-        print ('Elapsed time of Mol. clustering: ', mid_time_2 - mid_time_1, 'sec')
+        print ('[Mol. clustering] Elapsed time: ', mid_time_2 - mid_time_1, 'sec')
 
     def znparsing_func(self, df):
 
@@ -262,8 +265,11 @@ class Parallel:
             print ('The csv file should have the "ZINC" and "description" column')
             quit()
 
+        leng = len(zinc)
+        i = 1
+
         df2_ls = []
-        for _zinc_ls, _pdbqt in tqdm(zip(zinc, pdbqt)):
+        for _zinc_ls, _pdbqt in zip(zinc, pdbqt):
 
             try:
                 response = requests.get(f'http://zinc15.docking.org/substances/{str(_zinc_ls)}/').text
@@ -285,12 +291,18 @@ class Parallel:
                 num_chirals = len(chir)
                 chirals = str(chir)
 
-                df2 = pd.DataFrame([[_pdbqt, _zinc_ls, Mwt, logP, Rbonds, Hdonors, Hacceptors, Psa, NetC, num_chirals, chirals, smiles]], columns=['description', 'ZINC', 'Mwt', 'LogP', 'Rotatable bonds', 'H-donors', 'H-acceptors', 'PSA', 'Net charge', 'Num chirals', 'chirals', 'SMILES'])
+                qmo = round(QED.qed(mol), 4)
+
+                df2 = pd.DataFrame([[_pdbqt, qmo, Mwt, logP, Rbonds, Hdonors, Hacceptors, Psa, NetC, num_chirals, chirals, smiles]], columns=['description', 'QED_mean', 'Mwt', 'LogP', 'Rotatable bonds', 'H-donors', 'H-acceptors', 'PSA', 'Net charge', 'Num chirals', 'chirals', 'SMILES'])
 
                 df2_ls.append(df2)
 
+                print (f'[{i}/{leng}]: {_zinc_ls} --- Done !')
+                i += 1
+
             except (AttributeError, TypeError, ValueError):
-                pass
+                print (f'[{i}/{leng}]: {_zinc_ls} --- Error !')
+                i += 1
 
 
         new_df = pd.concat(df2_ls, ignore_index=True)
@@ -351,9 +363,9 @@ class Parallel:
 
         else:
             if self.args.fn == '' or self.args.fn == 'postproc':
-                dst = csv.replace('.csv', '') + '_postproc.csv'
+                dst = os.path.splitext(csv)[0] + '_postproc.csv'
             else:
-                dst = csv.replace('.csv', '') + '_' + func_name.split('_')[0] + '.csv'
+                dst = os.path.splitext(csv)[0] + '_' + func_name.split('_')[0] + '.csv'
 
             if os.path.isfile(dst) == True:
                 pass
@@ -403,6 +415,8 @@ class ParallelRun:
 
     def obabel_pararun (self):
 
+        start = time.time()
+
         self.__print()
         if self.args.fn == '' or self.args.fn == 'postproc':
             print ('-----------------------------')
@@ -410,8 +424,11 @@ class ParallelRun:
         else:
             pass
         self.parallel.parallelize (self.parallel.obabel_func)
+        print ('[OpenBabel] Elapsed time: ', time.time() - start, 'sec')
 
     def property_pararun (self):
+
+        start = time.time()
 
         self.__print()
         if self.args.fn == '' or self.args.fn == 'postproc':
@@ -420,6 +437,7 @@ class ParallelRun:
         else:
             pass
         self.parallel.parallelize (self.parallel.property_func)
+        print ('[Mol. properties] Elapsed time: ', time.time() - start, 'sec')
 
     def znparsing_pararun (self):
 
@@ -434,7 +452,7 @@ class ParallelRun:
         print ('-----------------------------')
         print ('Mol. fingerprint extrating ...')
         new_dict, dst = self.parallel.parallelize(self.parallel.clustering_prep)
-        print ('Elapsed time of fingerprine extraction: ', time.time() - start, 'sec')
+        print ('[Fingerprine extract] Elapsed time: ', time.time() - start, 'sec')
         self.args.csv = dst
         self.parallel.clustering_func(new_dict)
 

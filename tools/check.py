@@ -15,7 +15,7 @@ class PathCheck:
 
         args_dict = vars(self.args)
 
-        predesignated_paths = {'vinapath':'/opt/vina/vina_split', 'resultpath':'./result', 'listpath':'./list.txt'}
+        predesignated_paths = {'vinapath':'/opt/vina/vina_split', 'resultpath':'./result', 'listpath':'./list.txt', 'autodockbin':'/opt/AutoDock-GPU/bin/autodock_gpu_128wi'}
 
         if self.args.fn == '': # autorun
             
@@ -31,7 +31,7 @@ class PathCheck:
                         print ('example: --proteinpath /path/to/protein.maps.fld (=.maps.fld file)')
                         quit()
 
-                if key == 'vinapath' or key == 'resultpath' or key == 'listpath':
+                if key == 'vinapath' or key == 'resultpath' or key == 'listpath' or key == 'autodockbin':
                     if isinstance (values, NoneType) == True:
                         print (f'* {key} automatically set to "{predesignated_paths[key]}"')
                     else:
@@ -43,7 +43,16 @@ class PathCheck:
                             print (f'* {key} set to "{predesignated_paths[key]}" by user')                           
                         elif key == 'listpath':
                             predesignated_paths[key] = self.args.listpath
-                            print (f'* {key} set to "{predesignated_paths[key]}" by user')                               
+                            print (f'* {key} set to "{predesignated_paths[key]}" by user')
+                        elif key == 'autodockbin':
+                            predesignated_paths[key] = self.args.autodockbin
+                            if os.path.isfile(predesignated_paths[key]) != True:
+                                print (f'Please check the AutoDock-GPU binary ** input: {predesignated_paths[key]}')
+                                print ('example: --autodockbin /path/to/autodock_gpu_binary (=binary file)')
+                                quit()
+                            else:
+                                print (f'* {key} set to "{predesignated_paths[key]}" by user')
+
                         
                 elif key == 'qtpath':
                     pass
@@ -88,25 +97,25 @@ class PathCheck:
                                     if os.path.splitext(self.args.listpath)[1] == '.txt':
                                         predesignated_paths[i] = self.args.listpath
                                     else:
-                                        print (f'Please check the listpath // input: {args_dict[i]}')
+                                        print (f'Please check the listpath ** input: {args_dict[i]}')
                                         print ('example: --listpath /path/to/list.txt')
-                                        quit()       
+                                        quit()
                             else:
                                 if os.path.isfile(str(self.args.listpath)) == True:
                                     predesignated_paths[i] = self.args.listpath
                                 else:
-                                    print (f'Please check the listpath // input: {args_dict[i]}')
+                                    print (f'Please check the listpath ** input: {args_dict[i]}')
                                     print ('example: --listpath /path/to/list.txt')
                                     quit()
 
                         elif i == 'vinapath': # return path
                             if args_dict[i] == None:
                                 pass
-                            elif os.path.isdir(str(self.args.vinapath)) == True:
+                            elif os.path.isfile(str(self.args.vinapath)) == True:
                                 predesignated_paths[i] = self.args.vinapath
                             else:
-                                print (f'Please check the vinapath // input: {args_dict[i]}')
-                                print ('example: --vinapath /path/to/vina_bin (=directory)')
+                                print (f'Please check the vinapath ** input: {args_dict[i]}')
+                                print ('example: --vinapath /path/to/vina_split (=binary_file)')
                                 quit()
  
                         elif i == 'resultpath': # return path
@@ -117,14 +126,14 @@ class PathCheck:
                                     if os.path.splitext(self.args.resultpath)[1] == '':
                                         predesignated_paths[i] = self.args.resultpath
                                     else:
-                                        print (f'Please check the resultpath // input: {args_dict[i]}')
+                                        print (f'Please check the resultpath ** input: {args_dict[i]}')
                                         print ('example: --resultpath /path/to/result_files (=directory)')
                                         quit() 
                             else:
                                 if os.path.isdir(str(self.args.resultpath)) == True:
                                     predesignated_paths[i] = self.args.resultpath
                                 else:
-                                    print (f'Please check the resultpath // input: {args_dict[i]}')
+                                    print (f'Please check the resultpath ** input: {args_dict[i]}')
                                     print ('example: --resultpath /path/to/result_files (=directory)')
                                     quit()
 
@@ -132,7 +141,7 @@ class PathCheck:
                             if os.path.isfile(str(self.args.autodockbin)) == True:
                                 pass
                             else:
-                                print (f'Please check the AutoDock-GPU binary // input: {args_dict[i]}')
+                                print (f'Please check the AutoDock-GPU binary ** input: {args_dict[i]}')
                                 print ('example: --autodockbin /path/to/autodock_gpu_binary (=binary file)')
                                 quit()
                                 
@@ -143,7 +152,7 @@ class PathCheck:
                             if os.path.isfile(str(self.args.csv)) == True:
                                 pass
                             else:
-                                print (f'Please check the csv file // input: {args_dict[i]}')
+                                print (f'Please check the csv file ** input: {args_dict[i]}')
                                 print ('example: --csv /path/to/csv_file.csv (=csv file)')
                                 quit()
                         else:
@@ -151,7 +160,7 @@ class PathCheck:
                                 pass
                             else:
                                 _dst = i.replace('path','')
-                                print (f'Please check the {i} // input: {args_dict[i]}')
+                                print (f'Please check the {i} ** input: {args_dict[i]}')
                                 print (f'example: --{i} /path/to/{_dst} (=directory)')
                                 quit()
             

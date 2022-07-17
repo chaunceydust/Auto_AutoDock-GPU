@@ -54,9 +54,19 @@ class Misc:
     def value_cutoff (self):
 
         csv = os.path.abspath(self.args.csv)
+
+        if self.args.fn == '' or self.args.fn == 'postproc':
+            inp_csv = os.path.splitext(csv)[0] + '_postproc.csv'
+            csv = os.path.abspath(inp_csv)
+        else:
+            pass
+
         csv_file_name = os.path.basename(csv)
         csv_file_dir = os.path.dirname(csv)
-        csv_cutoff_file_name = csv_file_name.replace('.csv','') + '_cutoff.csv'
+        csv_cutoff_file_name = csv_file_name.replace('.csv','') + '_original.csv'
+        dst = os.path.join(csv_file_dir, csv_cutoff_file_name)
+
+        shutil.copyfile(csv, dst)
 
         df = pd.read_csv(csv, index_col = 0)
 
@@ -64,9 +74,7 @@ class Misc:
 
         df = df[condition].sort_values(by=['Lowest_binding_energy'], ascending=True).reset_index(drop=True)
 
-        dst = os.path.join(csv_file_dir, csv_cutoff_file_name)
-
-        df.to_csv(dst)
+        df.to_csv(csv)
 
 
     def scatterplot(self):
@@ -77,11 +85,11 @@ class Misc:
 
         csv = os.path.abspath(self.args.csv)
 
-        if self.args.fn == '' or self.args.fn == 'postproc':
-            self.args.csv = os.path.splitext(csv)[0] + '_cutoff.csv'
-            csv = os.path.abspath (self.args.csv)
-        else:
-            pass
+        # if self.args.fn == '' or self.args.fn == 'postproc':
+        #     inp_csv = os.path.splitext(csv)[0] + '_postproc.csv'
+        #     csv = os.path.abspath (inp_csv)
+        # else:
+        #     pass
 
         dirname = os.path.dirname(csv)
         df = pd.read_csv(csv)
