@@ -19,7 +19,13 @@ OpenBabel (2.4.1)
 or you can use the preset docker image for this repository that is using the nvidia-docker.
 
 ```
-docker pull jongseopark/autodock_gpu_js:latest
+docker pull jongseopark/auto_autodock-gpu:latest
+```
+
+or If you do not want to pull this docker image, then use the dockerfile in this repository.
+
+```
+docker build -t image_name:tag ./
 ```
 
 ### Set conda env. for docking
