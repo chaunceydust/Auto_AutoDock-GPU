@@ -24,7 +24,7 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone \
 RUN wget -q -P /tmp https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh \
     && bash /tmp/Miniconda3-latest-Linux-x86_64.sh -b -p /opt/conda \
     && rm /tmp/Miniconda3-latest-Linux-x86_64.sh \
-    && echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc \
+    && echo '. /opt/conda/etc/profile.d/conda.sh' >> ~/.bashrc \
     && echo 'export PATH="/opt/conda/bin/":$PATH' >> ~/.bashrc \
     && /bin/bash -c "source ~/.bashrc"
 
@@ -34,14 +34,26 @@ WORKDIR /opt/
 RUN git clone https://github.com/jongseo-park/Auto_AutoDock-GPU \
     && git clone https://github.com/ccsb-scripps/AutoDock-GPU \
     && wget https://github.com/openbabel/openbabel/archive/refs/tags/openbabel-2-4-1.tar.gz \
+    && wget https://vina.scripps.edu/wp-content/uploads/sites/55/2020/12/autodock_vina_1_1_2_linux_x86.tgz \
     && tar -zxvf openbabel-2-4-1.tar.gz \
-    && rm -rf openbabel-2-4-1.tar.gz
+    && rm -rf openbabel-2-4-1.tar.gz \
+    && tar -zxvf autodock_vina_1_1_2_linux_x86.tgz \
+    && rm -rf autodock_vina_1_1_2_linux_x86.tgz \ 
+    && mv autodock_vina_1_1_2_linux_x86 vina
 
 # autodock-gpu setup
 WORKDIR /opt/AutoDock-GPU
 RUN export GPU_INCLUDE_PATH="/usr/local/cuda/include/" \
     && export GPU_LIBRARY_PATH="/usr/local/cuda/lib64" \ 
-    && make DEVICE=CUDA NUMWI=128
+    && make DEVICE=CUDA NUMWI=128 TARGETS="86" \
+    && make DEVICE=CUDA NUMWI=256 TARGETS="86" \
+    && mv ./bin/autodock_gpu_256wi ./bin/autodock_gpu_256wi_sm86 \
+    && mv ./bin/autodock_gpu_128wi ./bin/autodock_gpu_128wi_sm86 \
+    && make DEVICE=CUDA NUMWI=128 \
+    && make DEVICE=CUDA NUMWI=256
+
+# autodock-vina setup
+
 
 # openbabel setup
 WORKDIR /opt/openbabel-openbabel-2-4-1
@@ -63,4 +75,5 @@ RUN conda env create -f requirements.yml \
 # Finalize
 WORKDIR /home/run/
 RUN echo 'export PATH="/opt/openbabel/bin/":$PATH' >> ~/.bashrc \
+    && rm -rf /opt/openbabel-openbabel-2-4-1 \
     && echo "conda activate autodock_gpu" >> ~/.bashrc \
