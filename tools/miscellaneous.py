@@ -80,17 +80,12 @@ class Misc:
     def scatterplot(self):
         
         import matplotlib.pyplot as plt
+        import matplotlib.cm as cm 
+
 
         filename = 'scatter.png'
 
         csv = os.path.abspath(self.args.csv)
-
-        # if self.args.fn == '' or self.args.fn == 'postproc':
-        #     inp_csv = os.path.splitext(csv)[0] + '_postproc.csv'
-        #     csv = os.path.abspath (inp_csv)
-        # else:
-        #     pass
-
         dirname = os.path.dirname(csv)
         df = pd.read_csv(csv)
 
@@ -98,6 +93,8 @@ class Misc:
 
         X = df['Lowest_binding_energy']
         Y = df['QED_mean']
+
+        # color = cm.rainbow(np.linspace(0, 1, len(df['clusters'])))
 
         # plotting
         ax.scatter(X, Y, 80, color='black', linewidths=1.0)
