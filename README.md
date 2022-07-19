@@ -16,7 +16,9 @@ autodock-vina
 OpenBabel (2.4.1)
 ```
 
-or you can use the preset docker image for this repository that is using the nvidia-docker.
+You can manually setup those softwares, 
+
+or you can use the preset docker image for this repository that is running based on the nvidia-docker.
 
 ```
 docker pull jongseopark/auto_autodock-gpu:latest
@@ -28,7 +30,13 @@ or If you do not want to pull this docker image, then use the dockerfile in this
 docker build -t image_name:tag ./
 ```
 
+In this docker image, you can find the binary files of AutoDock-GPU and AutoDock-vina into the `/opt/AutoDock-GPU/bin/` and `/opt/vina/bin/`, respectively.
+
+
 ### Set conda env. for docking
+
+If you don't want to use the docker ...
+
 ```
 conda env create -f requirements.yml
 conda activate autodock_gpu
@@ -43,13 +51,15 @@ conda activate autodock_gpu
 
 ## How to use
 
-### 1. Download ligand files from ZINC database
+### 1. Download ligand files
 
-You can download the pdbqt formatted files from the ZINC database *(not described in this repository)*.
+Generally, you can download the pdbqt formatted files from several databases such as ZINC.
 
 *[ZINC database](https://zinc.docking.org)*
 
 (Tranches > 3D > select you want > download as pdbqt)
+
+Also, you can use the smi formatted files that containing several SMILE strings.
 
 <br>
 
@@ -141,7 +151,7 @@ and in the `ligands` directory, the ligand files formatted in pdbqt are located.
             ligand_1.pdbqt
             ligand_2.pdbqt
             ...
-            ligand_n.pdbqt
+            ligand_n.pdbqt (or .smi)
 
 
 <br/>
