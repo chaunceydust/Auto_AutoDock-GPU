@@ -135,7 +135,7 @@ and in the `ligands` directory, the ligand files formatted in pdbqt are located.
 
     Working_dir/
 
-        autodock_gpu_for_zinc.py          # The script in this repository
+        auto_autodock_gpu.py                  # The script in this repository
         tools /
             ...py
             ...py
@@ -161,7 +161,7 @@ and in the `ligands` directory, the ligand files formatted in pdbqt are located.
 *flags*
 
 ```
-usage: autodock_gpu_for_zinc.py [-h] [-smi] [-sl] [-p PROTEINPATH] [-l LIGANDPATH] [-v VINAPATH]
+usage: auto_autodock_gpu.py [-h] [-smi] [-sl] [-p PROTEINPATH] [-l LIGANDPATH] [-v VINAPATH]
                                 [-ls LISTPATH] [-d RESULTPATH] [-bin AUTODOCKBIN] [--gpu GPU]
                                 [--qtpath QTPATH] [--np NP] [--fn FN] [--csv CSV] [--splitnum SPLITNUM]
 
@@ -198,7 +198,7 @@ options:
 When you type the command as belows, you can find the list of functions.
 
 ```
-python3 autodock_gpu_for_zinc.py --fn x
+python3 auto_autodock_gpu.py --fn x
 ```
 
 <br>
@@ -260,7 +260,7 @@ For example ...
 If you want to use only one function such as `splitligs`, not entire process,
 
 ```
-python3 autodock_gpu_for_zinc.py \
+python3 auto_autodock_gpu.py \
     -fn splitligs
     -l ./ligands
     -v /opt/programs/autodock_vina/bin/
@@ -269,7 +269,7 @@ python3 autodock_gpu_for_zinc.py \
 or it you want to run the entire process, then use as follows.
 
 ```
-python3 autodock_gpu_for_zinc.py \
+python3 auto_autodock_gpu.py \
     -p ./protein/protein.maps.fld
     -l ./ligands
     -v /opt/programs/autodock_vina/bin/
