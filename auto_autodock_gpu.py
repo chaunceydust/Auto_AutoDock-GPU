@@ -25,7 +25,7 @@ parser.add_argument('-d', '--resultpath', required=False, type=str, default=None
 
 # setting
 parser.add_argument('-bin', '--autodockbin', required=False, type=str, default='autodock_gpu_128wi', help='Binary file of AutoDock-GPU (bin_file)')
-parser.add_argument('--gpu', required=False, type=int, default=1, help='Which GPU do you use ? (starts at 1)')
+parser.add_argument('--gpu', required=False, type=str, default=1, help='Which GPU do you use ? (starts at 1)')
 parser.add_argument('--qtpath', required=False, type=str, default=None, help='path to pdbqt (for running obabel)')
 
 # etc
